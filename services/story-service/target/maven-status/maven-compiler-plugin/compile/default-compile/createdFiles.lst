@@ -1,0 +1,9 @@
+com\socialapp\story\service\StoryService.class
+com\socialapp\story\client\UserServiceClient.class
+com\socialapp\story\document\MediaType.class
+com\socialapp\story\document\Story$StoryBuilder.class
+com\socialapp\story\controller\StoryController.class
+com\socialapp\story\StoryServiceApplication.class
+com\socialapp\story\document\Story.class
+com\socialapp\story\repository\StoryRepository.class
+com\socialapp\story\dto\CreateStoryRequest.class

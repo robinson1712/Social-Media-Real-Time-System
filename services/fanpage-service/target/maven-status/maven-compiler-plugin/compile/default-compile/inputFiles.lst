@@ -1,0 +1,12 @@
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\controller\FanpageController.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\dto\AddAdminRequest.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\dto\CreateFanpageRequest.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\entity\AdminRole.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\entity\Fanpage.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\entity\PageAdmin.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\entity\PageFollower.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\FanpageServiceApplication.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\repository\FanpageRepository.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\repository\PageAdminRepository.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\repository\PageFollowerRepository.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\service\FanpageService.java

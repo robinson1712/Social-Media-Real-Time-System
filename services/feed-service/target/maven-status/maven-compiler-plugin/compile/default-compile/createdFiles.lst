@@ -1,0 +1,12 @@
+com\socialapp\feed\dto\PostDto.class
+com\socialapp\feed\service\FeedQueryService.class
+com\socialapp\feed\client\FanpageClient.class
+com\socialapp\feed\client\UserClient.class
+com\socialapp\feed\dto\PageFollowerDto.class
+com\socialapp\feed\service\FeedFanoutService.class
+com\socialapp\feed\consumer\PostCreatedConsumer.class
+com\socialapp\feed\controller\FeedController.class
+com\socialapp\feed\FeedServiceApplication.class
+com\socialapp\feed\client\PostClient.class
+com\socialapp\feed\dto\GroupMemberDto.class
+com\socialapp\feed\client\GroupClient.class

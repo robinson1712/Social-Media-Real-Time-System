@@ -1,0 +1,11 @@
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\controller\GroupController.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\dto\CreateGroupRequest.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\entity\Group.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\entity\GroupMember.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\entity\GroupPrivacy.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\entity\MemberRole.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\entity\MemberStatus.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\GroupServiceApplication.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\repository\GroupMemberRepository.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\repository\GroupRepository.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\service\GroupService.java

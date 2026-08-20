@@ -1,0 +1,217 @@
+package com.socialapp.group.service;
+
+import com.socialapp.common.event.GroupEvent;
+import com.socialapp.common.event.KafkaTopics;
+import com.socialapp.common.exception.ConflictException;
+import com.socialapp.common.exception.ForbiddenException;
+import com.socialapp.common.exception.ResourceNotFoundException;
+import com.socialapp.common.exception.UnauthorizedException;
+import com.socialapp.common.security.CurrentUserContext;
+import com.socialapp.group.dto.CreateGroupRequest;
+import com.socialapp.group.entity.Group;
+import com.socialapp.group.entity.GroupMember;
+import com.socialapp.group.entity.GroupPrivacy;
+import com.socialapp.group.entity.MemberRole;
+import com.socialapp.group.entity.MemberStatus;
+import com.socialapp.group.repository.GroupMemberRepository;
+import com.socialapp.group.repository.GroupRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class GroupService {
+
+    private final GroupRepository groupRepository;
+    private final GroupMemberRepository groupMemberRepository;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    @Transactional
+    public Group createGroup(CreateGroupRequest request) {
+        String userId = requireUserId();
+
+        Group group = Group.builder()
+                .name(request.name())
+                .description(request.description())
+                .privacy(request.privacy())
+                .ownerId(userId)
+                .memberCount(1)
+                .build();
+        group = groupRepository.save(group);
+
+        GroupMember owner = GroupMember.builder()
+                .groupId(group.getId())
+                .userId(userId)
+                .role(MemberRole.ADMIN)
+                .status(MemberStatus.APPROVED)
+                .joinedAt(Instant.now())
+                .build();
+        groupMemberRepository.save(owner);
+
+        publish(group.getId(), userId, null, "CREATED");
+        return group;
+    }
+
+    public Group getGroup(String id) {
+        return groupRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found: " + id));
+    }
+
+    public Page<Group> listPublicGroups(String name, Pageable pageable) {
+        // Simplification for this pass: only PUBLIC groups are listed here.
+        // Private groups the caller already belongs to are intentionally not
+        // surfaced by this endpoint yet.
+        if (name != null && !name.isBlank()) {
+            return groupRepository.findByPrivacyAndNameContainingIgnoreCase(GroupPrivacy.PUBLIC, name, pageable);
+        }
+        return groupRepository.findByPrivacy(GroupPrivacy.PUBLIC, pageable);
+    }
+
+    @Transactional
+    public GroupMember join(String groupId) {
+        String userId = requireUserId();
+        Group group = getGroup(groupId);
+
+        if (groupMemberRepository.existsByGroupIdAndUserId(groupId, userId)) {
+            throw new ConflictException("Already a member (or pending) of this group");
+        }
+
+        GroupMember member;
+        if (group.getPrivacy() == GroupPrivacy.PUBLIC) {
+            member = GroupMember.builder()
+                    .groupId(groupId)
+                    .userId(userId)
+                    .role(MemberRole.MEMBER)
+                    .status(MemberStatus.APPROVED)
+                    .joinedAt(Instant.now())
+                    .build();
+            groupMemberRepository.save(member);
+
+            group.setMemberCount(group.getMemberCount() + 1);
+            groupRepository.save(group);
+
+            publish(groupId, userId, userId, "JOINED");
+        } else {
+            member = GroupMember.builder()
+                    .groupId(groupId)
+                    .userId(userId)
+                    .role(MemberRole.MEMBER)
+                    .status(MemberStatus.PENDING)
+                    .joinedAt(null)
+                    .build();
+            groupMemberRepository.save(member);
+
+            publish(groupId, userId, group.getOwnerId(), "JOIN_REQUESTED");
+        }
+        return member;
+    }
+
+    @Transactional
+    public GroupMember approveMember(String groupId, String userId) {
+        String currentUserId = requireUserId();
+        requireAdmin(groupId, currentUserId);
+
+        GroupMember member = groupMemberRepository.findByGroupIdAndUserId(groupId, userId)
+                .filter(m -> m.getStatus() == MemberStatus.PENDING)
+                .orElseThrow(() -> new ResourceNotFoundException("No pending membership for user " + userId));
+
+        member.setStatus(MemberStatus.APPROVED);
+        member.setJoinedAt(Instant.now());
+        groupMemberRepository.save(member);
+
+        Group group = getGroup(groupId);
+        group.setMemberCount(group.getMemberCount() + 1);
+        groupRepository.save(group);
+
+        publish(groupId, currentUserId, userId, "APPROVED");
+        return member;
+    }
+
+    @Transactional
+    public void leave(String groupId) {
+        String userId = requireUserId();
+        GroupMember member = groupMemberRepository.findByGroupIdAndUserId(groupId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Not a member of this group"));
+
+        boolean wasApproved = member.getStatus() == MemberStatus.APPROVED;
+        groupMemberRepository.delete(member);
+
+        if (wasApproved) {
+            Group group = getGroup(groupId);
+            group.setMemberCount(Math.max(0, group.getMemberCount() - 1));
+            groupRepository.save(group);
+        }
+    }
+
+    @Transactional
+    public void removeMember(String groupId, String userId) {
+        String currentUserId = requireUserId();
+        requireAdmin(groupId, currentUserId);
+
+        GroupMember member = groupMemberRepository.findByGroupIdAndUserId(groupId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User is not a member of this group"));
+
+        boolean wasApproved = member.getStatus() == MemberStatus.APPROVED;
+        groupMemberRepository.delete(member);
+
+        if (wasApproved) {
+            Group group = getGroup(groupId);
+            group.setMemberCount(Math.max(0, group.getMemberCount() - 1));
+            groupRepository.save(group);
+        }
+
+        publish(groupId, currentUserId, userId, "REMOVED");
+    }
+
+    public Page<GroupMember> listMembers(String groupId, Pageable pageable) {
+        return groupMemberRepository.findByGroupIdAndStatus(groupId, MemberStatus.APPROVED, pageable);
+    }
+
+    public Page<Group> myGroups(Pageable pageable) {
+        String userId = requireUserId();
+        Page<GroupMember> memberships = groupMemberRepository.findByUserIdAndStatus(userId, MemberStatus.APPROVED, pageable);
+
+        List<String> groupIds = memberships.getContent().stream()
+                .map(GroupMember::getGroupId)
+                .toList();
+        Map<String, Group> groupsById = groupRepository.findAllById(groupIds).stream()
+                .collect(Collectors.toMap(Group::getId, g -> g));
+        List<Group> groups = groupIds.stream()
+                .map(groupsById::get)
+                .filter(Objects::nonNull)
+                .toList();
+
+        return new PageImpl<>(groups, pageable, memberships.getTotalElements());
+    }
+
+    private void requireAdmin(String groupId, String userId) {
+        GroupMember member = groupMemberRepository.findByGroupIdAndUserId(groupId, userId)
+                .orElseThrow(() -> new ForbiddenException("Only group admins may perform this action"));
+        if (member.getStatus() != MemberStatus.APPROVED || member.getRole() != MemberRole.ADMIN) {
+            throw new ForbiddenException("Only group admins may perform this action");
+        }
+    }
+
+    private void publish(String groupId, String actorId, String targetUserId, String type) {
+        kafkaTemplate.send(KafkaTopics.GROUP, new GroupEvent(groupId, actorId, targetUserId, type, Instant.now()));
+    }
+
+    private String requireUserId() {
+        String userId = CurrentUserContext.getUserId();
+        if (userId == null) {
+            throw new UnauthorizedException("Authentication required");
+        }
+        return userId;
+    }
+}

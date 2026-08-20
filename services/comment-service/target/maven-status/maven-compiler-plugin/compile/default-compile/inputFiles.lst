@@ -1,0 +1,9 @@
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\client\PostClient.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\CommentServiceApplication.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\controller\CommentController.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\dto\CreateCommentRequest.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\dto\PostDto.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\dto\UpdateCommentRequest.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\entity\Comment.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\repository\CommentRepository.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\service\CommentService.java

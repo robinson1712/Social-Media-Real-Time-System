@@ -1,0 +1,17 @@
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\ChatServiceApplication.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\config\WebSocketConfig.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\controller\ChatController.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\controller\ChatStompController.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\document\Conversation.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\document\ConversationType.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\document\Message.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\dto\ChatSendRequest.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\dto\CreateConversationRequest.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\event\MatchEventListener.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\presence\PresenceEventListener.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\repository\ConversationRepository.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\repository\MessageRepository.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\security\StompPrincipal.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\security\UserHandshakeHandler.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\security\UserHandshakeInterceptor.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\chat-service\src\main\java\com\socialapp\chat\service\ChatService.java

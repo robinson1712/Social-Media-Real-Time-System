@@ -1,0 +1,9 @@
+com\socialapp\post\entity\Post.class
+com\socialapp\post\PostServiceApplication.class
+com\socialapp\post\controller\PostController.class
+com\socialapp\post\event\PostEventListener.class
+com\socialapp\post\entity\Post$PostBuilder.class
+com\socialapp\post\repository\PostRepository.class
+com\socialapp\post\dto\CreatePostRequest.class
+com\socialapp\post\dto\UpdatePostRequest.class
+com\socialapp\post\service\PostService.class

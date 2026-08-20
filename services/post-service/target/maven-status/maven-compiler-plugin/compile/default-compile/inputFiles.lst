@@ -1,0 +1,8 @@
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\controller\PostController.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\dto\CreatePostRequest.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\dto\UpdatePostRequest.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\entity\Post.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\event\PostEventListener.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\PostServiceApplication.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\repository\PostRepository.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\service\PostService.java

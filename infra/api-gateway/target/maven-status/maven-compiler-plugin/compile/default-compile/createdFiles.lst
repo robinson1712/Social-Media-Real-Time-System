@@ -1,0 +1,3 @@
+com\socialapp\gateway\config\GatewayConfig.class
+com\socialapp\gateway\ApiGatewayApplication.class
+com\socialapp\gateway\filter\JwtAuthenticationFilter.class

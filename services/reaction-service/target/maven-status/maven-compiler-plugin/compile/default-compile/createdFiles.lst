@@ -1,0 +1,9 @@
+com\socialapp\reaction\service\ReactionService.class
+com\socialapp\reaction\repository\ReactionRepository$TypeCount.class
+com\socialapp\reaction\dto\ReactionSummaryResponse.class
+com\socialapp\reaction\repository\ReactionRepository.class
+com\socialapp\reaction\controller\ReactionController.class
+com\socialapp\reaction\dto\UpsertReactionRequest.class
+com\socialapp\reaction\entity\Reaction.class
+com\socialapp\reaction\entity\Reaction$ReactionBuilder.class
+com\socialapp\reaction\ReactionServiceApplication.class
