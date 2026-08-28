@@ -9,7 +9,6 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,7 +37,7 @@ public class Post {
     @Column(nullable = false)
     private String authorId;
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @ElementCollection(fetch = FetchType.EAGER)

@@ -5,6 +5,7 @@ com\socialapp\comment\entity\Comment$CommentBuilder.class
 com\socialapp\comment\service\CommentService.class
 com\socialapp\comment\dto\PostDto.class
 com\socialapp\comment\controller\CommentController.class
+com\socialapp\comment\client\PostClientFallbackFactory.class
 com\socialapp\comment\CommentServiceApplication.class
 com\socialapp\comment\dto\CreateCommentRequest.class
 com\socialapp\comment\client\PostClient.class

@@ -2,6 +2,7 @@ package com.socialapp.dating.controller;
 
 import com.socialapp.common.dto.ApiResponse;
 import com.socialapp.common.dto.PageResponse;
+import com.socialapp.dating.dto.CandidateResponse;
 import com.socialapp.dating.dto.SwipeRequest;
 import com.socialapp.dating.dto.SwipeResponse;
 import com.socialapp.dating.dto.UpsertProfileRequest;
@@ -30,7 +31,7 @@ public class DatingController {
     private final DatingService datingService;
 
     @PutMapping("/profile")
-    public ResponseEntity<ApiResponse<DatingProfile>> upsertProfile(@RequestBody UpsertProfileRequest request) {
+    public ResponseEntity<ApiResponse<DatingProfile>> upsertProfile(@Valid @RequestBody UpsertProfileRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Profile saved", datingService.upsertProfile(request)));
     }
 
@@ -40,11 +41,10 @@ public class DatingController {
     }
 
     @GetMapping("/candidates")
-    public ResponseEntity<ApiResponse<PageResponse<DatingProfile>>> getCandidates(
+    public ResponseEntity<ApiResponse<PageResponse<CandidateResponse>>> getCandidates(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(datingService.getCandidates(pageable))));
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(datingService.getCandidates(page, size))));
     }
 
     @PostMapping("/swipe")

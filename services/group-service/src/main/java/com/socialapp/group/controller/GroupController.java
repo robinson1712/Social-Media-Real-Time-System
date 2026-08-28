@@ -44,7 +44,7 @@ public class GroupController {
     public ResponseEntity<ApiResponse<PageResponse<Group>>> list(
             @RequestParam(required = false) String name,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(groupService.listPublicGroups(name, pageable))));
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(groupService.listVisibleGroups(name, pageable))));
     }
 
     @PostMapping("/{id}/join")

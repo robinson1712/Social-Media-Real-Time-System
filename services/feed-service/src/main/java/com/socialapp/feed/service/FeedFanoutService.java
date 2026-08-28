@@ -15,6 +15,13 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Each Feign client here (UserClient, GroupClient, FanpageClient) is wired
+ * with a Resilience4j circuit breaker + fallback (see application.yml and the
+ * *FallbackFactory classes in the client package) — a downstream failure never
+ * throws here, it just resolves to an empty audience, so this class doesn't
+ * need its own try/catch around these calls.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -76,38 +83,23 @@ public class FeedFanoutService {
     }
 
     private List<String> fetchGroupMemberIds(String groupId) {
-        try {
-            var response = groupClient.getMembers(groupId, MEMBER_PAGE_SIZE);
-            if (response == null || response.data() == null || response.data().content() == null) {
-                return Collections.emptyList();
-            }
-            return response.data().content().stream().map(GroupMemberDto::userId).toList();
-        } catch (Exception e) {
-            log.warn("Failed to fetch members for group {}: {}", groupId, e.getMessage());
+        var response = groupClient.getMembers(groupId, MEMBER_PAGE_SIZE);
+        if (response == null || response.data() == null || response.data().content() == null) {
             return Collections.emptyList();
         }
+        return response.data().content().stream().map(GroupMemberDto::userId).toList();
     }
 
     private List<String> fetchPageFollowerIds(String pageId) {
-        try {
-            var response = fanpageClient.getFollowers(pageId, MEMBER_PAGE_SIZE);
-            if (response == null || response.data() == null || response.data().content() == null) {
-                return Collections.emptyList();
-            }
-            return response.data().content().stream().map(PageFollowerDto::userId).toList();
-        } catch (Exception e) {
-            log.warn("Failed to fetch followers for page {}: {}", pageId, e.getMessage());
+        var response = fanpageClient.getFollowers(pageId, MEMBER_PAGE_SIZE);
+        if (response == null || response.data() == null || response.data().content() == null) {
             return Collections.emptyList();
         }
+        return response.data().content().stream().map(PageFollowerDto::userId).toList();
     }
 
     private List<String> fetchFriendIds(String userId) {
-        try {
-            List<String> friendIds = userClient.getFriendIds(userId);
-            return friendIds == null ? Collections.emptyList() : friendIds;
-        } catch (Exception e) {
-            log.warn("Failed to fetch friend ids for user {}: {}", userId, e.getMessage());
-            return Collections.emptyList();
-        }
+        List<String> friendIds = userClient.getFriendIds(userId);
+        return friendIds == null ? Collections.emptyList() : friendIds;
     }
 }

@@ -32,6 +32,8 @@ Client (Web/Mobile)
 
   Config Server (8888) — cấp config tập trung (native, đọc từ ./config-repo)
   Kafka — giao tiếp bất đồng bộ giữa các service (post/comment/reaction/group/page/match/message events)
+
+  Observability: Zipkin (9411, distributed tracing) — Loki+Promtail+Grafana (3000, log tập trung)
 ```
 
 Chi tiết đầy đủ: xem `docs/plan.md` hoặc lịch sử trò chuyện đã tạo ra hệ thống này.
@@ -81,7 +83,11 @@ curl -X POST http://localhost:8080/api/posts -H "Authorization: Bearer $TOKEN" \
 curl http://localhost:8080/api/feed/me -H "Authorization: Bearer $TOKEN"
 ```
 
-WebSocket chat/notification: kết nối STOMP over SockJS tới `ws://localhost:8080/ws?token=$TOKEN`.
+WebSocket (STOMP): chat tại `ws://localhost:8080/ws?token=$TOKEN` (SockJS) hoặc `ws://localhost:8080/ws/websocket?token=$TOKEN` (raw WebSocket, bỏ qua SockJS framing); notification tại `ws://localhost:8080/ws-notifications?token=$TOKEN` (SockJS) hoặc `.../ws-notifications/websocket?token=$TOKEN` (raw) — hai đường dẫn khác nhau vì gateway chỉ route được một service cho mỗi path.
+
+Swagger UI: mỗi service có UI test API riêng trên port của nó, vd `http://localhost:8084/swagger-ui/index.html` (post-service), `http://localhost:8091/swagger-ui/index.html` (dating-service) — xem bảng port ở trên để suy ra URL cho service khác.
+
+Observability: Zipkin UI `http://localhost:9411` (tìm trace theo service/traceId — mọi request qua gateway đều có 100% được trace, kể cả chặng Kafka bất đồng bộ); Grafana `http://localhost:3000` (anonymous admin, không cần đăng nhập) → Explore → datasource Loki để xem log tập trung mọi container, filter theo `{service="auth-service"}` — mỗi dòng log đều có sẵn `[traceId-spanId]` để tra ngược đúng trace trong Zipkin.
 
 ### Chạy từng service riêng lẻ khi phát triển (không qua Docker)
 
@@ -89,12 +95,29 @@ Cần Postgres/MongoDB/Redis/Kafka/MinIO chạy sẵn (có thể `docker compose
 rồi chạy service bằng `mvn spring-boot:run` trong từng thư mục `services/<name>`), theo thứ tự:
 `eureka-server` → `config-server` → các business service → `api-gateway`.
 
-## Giới hạn hiện tại (đã thống nhất với người dùng khi lên kế hoạch)
+## Đã hoàn thiện thêm sau lượt scaffold đầu
 
-Đây là bộ khung production-grade về mặt kiến trúc nhưng logic nghiệp vụ ở mức cơ bản. Chưa có:
-feed ranking thông minh, thuật toán match dating nâng cao, kiểm duyệt nội dung, rate-limit chi
-tiết/circuit breaker (Resilience4j), test coverage, CI/CD, observability/tracing (Zipkin/OTel).
-Một vài đơn giản hoá có chủ đích (ghi rõ trong code bằng comment) để giữ phạm vi khả thi cho lượt
-scaffold đầu tiên, ví dụ: `reaction-service` nhận `targetOwnerId` trực tiếp từ client thay vì tự
-resolve qua Feign; `group-service`/`fanpage-service` list công khai chưa lọc private group mà user
-đã là thành viên.
+- **Feed ranking theo engagement** (`feed-service`): đọc feed không còn thuần sắp theo thời gian.
+  `FeedQueryService` lấy một pool ứng viên có giới hạn từ Redis, chấm điểm mỗi post bằng công thức
+  kiểu Hacker News (`recencyScore × (1 + log(1 + reaction + 2×comment))`), sắp theo điểm rồi mới
+  phân trang trong bộ nhớ. Ghi (fanout) vẫn chỉ ghi timestamp thuần — ranking chỉ tính lúc đọc, nên
+  đổi công thức không cần migrate dữ liệu.
+- **Thuật toán matching cho dating** (`dating-service`): `DatingProfile` có thêm `gender`/`birthDate`
+  riêng (khác với `genderPreference` là *đang tìm ai*). `GET /candidates` lọc tương thích giới tính
+  hai chiều rồi chấm điểm 0-100 (tối đa 60 điểm cho độ tuổi phù hợp hai chiều, 40 điểm cho sở thích
+  chung theo Jaccard similarity), trả về kèm điểm số qua `CandidateResponse` để minh bạch thuật toán.
+- **Group visibility đúng theo quyền thành viên** (`group-service`): `GET /api/groups` giờ trả cả
+  group PRIVATE mà caller đã là thành viên APPROVED, không chỉ group PUBLIC.
+- **Resilience4j circuit breaker** trên mọi Feign client (`comment-service`, `story-service`,
+  `feed-service`): mỗi `@FeignClient` có `fallbackFactory` riêng, phân biệt lỗi nghiệp vụ (404 —
+  vẫn báo lỗi đúng) với lỗi hạ tầng (service sập/timeout — trả `ServiceUnavailableException` 503
+  hoặc giá trị rỗng tuỳ ngữ cảnh). Xem trạng thái circuit qua `actuator/circuitbreakers`.
+
+## Giới hạn còn lại
+
+Chưa có: kiểm duyệt nội dung (content moderation), rate-limit chi tiết ở gateway, test coverage
+(unit/integration test), CI/CD pipeline, observability/tracing (Zipkin/OpenTelemetry). Một vài đơn
+giản hoá có chủ đích còn lại (ghi rõ trong code bằng comment): `reaction-service` nhận
+`targetOwnerId` trực tiếp từ client thay vì tự resolve qua Feign (tránh phải có 3 Feign client cho
+POST/COMMENT/REEL); `fanpage-service` không có khái niệm private page (đúng theo thiết kế — fanpage
+luôn công khai, không cần sửa như group).

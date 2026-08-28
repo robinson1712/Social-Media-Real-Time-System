@@ -21,6 +21,7 @@ C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\exception\ForbiddenException.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\exception\GlobalExceptionHandler.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\exception\ResourceNotFoundException.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\exception\ServiceUnavailableException.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\exception\UnauthorizedException.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\security\CurrentUserContext.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\security\HeaderAuthFilter.java

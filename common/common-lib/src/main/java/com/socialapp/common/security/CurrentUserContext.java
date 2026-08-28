@@ -36,4 +36,19 @@ public final class CurrentUserContext {
     public static boolean isAuthenticated() {
         return USER_ID.get() != null;
     }
+
+    /**
+     * Test-support seam: service-layer unit tests across every module need a way
+     * to simulate "the caller is user X" without going through a real HTTP
+     * request and {@link HeaderAuthFilter}. This is the one intentional way in
+     * besides that filter — {@code set}/{@code clear} stay package-private, so
+     * no production code path (only test code) can reach this.
+     */
+    public static void setForTests(String userId, List<String> roles) {
+        set(userId, roles);
+    }
+
+    public static void clearForTests() {
+        clear();
+    }
 }

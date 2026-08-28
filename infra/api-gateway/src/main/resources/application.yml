@@ -20,62 +20,150 @@ spring:
           uri: lb://AUTH-SERVICE
           predicates:
             - Path=/api/auth/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_AUTH_REPLENISH:1}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_AUTH_BURST:5}
+                key-resolver: "#{@userOrIpKeyResolver}"
         - id: user-service
           uri: lb://USER-SERVICE
           predicates:
             - Path=/api/users/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
         - id: media-service
           uri: lb://MEDIA-SERVICE
           predicates:
             - Path=/api/media/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
         - id: post-service
           uri: lb://POST-SERVICE
           predicates:
             - Path=/api/posts/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
         - id: comment-service
           uri: lb://COMMENT-SERVICE
           predicates:
             - Path=/api/comments/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
         - id: reaction-service
           uri: lb://REACTION-SERVICE
           predicates:
             - Path=/api/reactions/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
         - id: story-service
           uri: lb://STORY-SERVICE
           predicates:
             - Path=/api/stories/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
         - id: reels-service
           uri: lb://REELS-SERVICE
           predicates:
             - Path=/api/reels/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
         - id: group-service
           uri: lb://GROUP-SERVICE
           predicates:
             - Path=/api/groups/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
         - id: fanpage-service
           uri: lb://FANPAGE-SERVICE
           predicates:
             - Path=/api/pages/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
         - id: dating-service
           uri: lb://DATING-SERVICE
           predicates:
             - Path=/api/dating/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
         - id: chat-service-ws
           uri: lb:ws://CHAT-SERVICE
           predicates:
             - Path=/ws/**
+        - id: notification-service-ws
+          uri: lb:ws://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/ws-notifications/**
         - id: chat-service
           uri: lb://CHAT-SERVICE
           predicates:
             - Path=/api/chat/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
         - id: notification-service
           uri: lb://NOTIFICATION-SERVICE
           predicates:
             - Path=/api/notifications/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
         - id: feed-service
           uri: lb://FEED-SERVICE
           predicates:
             - Path=/api/feed/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH:20}
+                redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST:40}
+                key-resolver: "#{@userOrIpKeyResolver}"
 
 jwt:
   secret: ${JWT_SECRET:change-this-social-app-jwt-secret-key-must-be-at-least-256-bits}
@@ -90,6 +178,12 @@ eureka:
     prefer-ip-address: true
 
 management:
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
   endpoints:
     web:
       exposure:

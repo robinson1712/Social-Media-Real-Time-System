@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "post-service")
+@FeignClient(name = "post-service", fallbackFactory = PostClientFallbackFactory.class)
 public interface PostClient {
 
     @GetMapping("/api/posts/batch")

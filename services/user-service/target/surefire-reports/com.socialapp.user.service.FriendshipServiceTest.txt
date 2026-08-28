@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.socialapp.user.service.FriendshipServiceTest
+-------------------------------------------------------------------------------
+Tests run: 32, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.428 s -- in com.socialapp.user.service.FriendshipServiceTest

@@ -1,7 +1,11 @@
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\client\FanpageClient.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\client\FanpageClientFallbackFactory.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\client\GroupClient.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\client\GroupClientFallbackFactory.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\client\PostClient.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\client\PostClientFallbackFactory.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\client\UserClient.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\client\UserClientFallbackFactory.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\consumer\PostCreatedConsumer.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\controller\FeedController.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\dto\GroupMemberDto.java

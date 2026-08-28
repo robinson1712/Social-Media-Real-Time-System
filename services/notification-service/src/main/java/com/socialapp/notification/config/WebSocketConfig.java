@@ -26,7 +26,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws")
+        // Distinct path from chat-service's own "/ws" — api-gateway can only route a given
+        // path prefix to one downstream service, so the two STOMP endpoints can't share a name.
+        registry.addEndpoint("/ws-notifications")
                 .setAllowedOriginPatterns("*")
                 .addInterceptors(userHandshakeInterceptor)
                 .setHandshakeHandler(userHandshakeHandler)

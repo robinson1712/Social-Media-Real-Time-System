@@ -1,5 +1,6 @@
 com\socialapp\dating\repository\DatingProfileRepository.class
 com\socialapp\dating\repository\SwipeRepository.class
+com\socialapp\dating\entity\Gender.class
 com\socialapp\dating\repository\MatchRepository.class
 com\socialapp\dating\entity\SwipeAction.class
 com\socialapp\dating\controller\DatingController.class
@@ -14,4 +15,5 @@ com\socialapp\dating\entity\Match.class
 com\socialapp\dating\dto\UpsertProfileRequest.class
 com\socialapp\dating\dto\SwipeRequest.class
 com\socialapp\dating\dto\SwipeResponse.class
+com\socialapp\dating\dto\CandidateResponse.class
 com\socialapp\dating\entity\Match$MatchBuilder.class

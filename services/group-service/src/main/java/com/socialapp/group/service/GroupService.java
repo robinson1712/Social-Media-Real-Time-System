@@ -68,14 +68,19 @@ public class GroupService {
                 .orElseThrow(() -> new ResourceNotFoundException("Group not found: " + id));
     }
 
-    public Page<Group> listPublicGroups(String name, Pageable pageable) {
-        // Simplification for this pass: only PUBLIC groups are listed here.
-        // Private groups the caller already belongs to are intentionally not
-        // surfaced by this endpoint yet.
-        if (name != null && !name.isBlank()) {
-            return groupRepository.findByPrivacyAndNameContainingIgnoreCase(GroupPrivacy.PUBLIC, name, pageable);
-        }
-        return groupRepository.findByPrivacy(GroupPrivacy.PUBLIC, pageable);
+    public Page<Group> listVisibleGroups(String name, Pageable pageable) {
+        // Every PUBLIC group, plus any PRIVATE group the caller already has an
+        // APPROVED membership in. CurrentUserContext.getUserId() may be null here
+        // (this endpoint doesn't require auth). Both query params are normalized to
+        // "" rather than null — a null bind parameter used only in an equality/IS
+        // NULL check defeats Postgres's JDBC type inference (it falls back to
+        // bytea, which then breaks the query's LOWER(...) usage) — "" never
+        // matches a real id or a real name, so the intended "no filter" /
+        // "no memberships" behavior is unchanged.
+        String callerId = CurrentUserContext.getUserId();
+        String normalizedCallerId = callerId == null ? "" : callerId;
+        String normalizedName = (name == null || name.isBlank()) ? "" : name;
+        return groupRepository.findVisibleGroups(normalizedCallerId, normalizedName, pageable);
     }
 
     @Transactional

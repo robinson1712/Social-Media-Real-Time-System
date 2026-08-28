@@ -3,7 +3,6 @@ package com.socialapp.fanpage.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -33,7 +32,7 @@ public class Fanpage {
 
     private String category;
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     private String avatarUrl;
