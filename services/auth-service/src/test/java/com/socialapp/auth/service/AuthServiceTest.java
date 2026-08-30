@@ -1,5 +1,6 @@
 package com.socialapp.auth.service;
 
+import com.socialapp.auth.config.AdminEmailAllowlist;
 import com.socialapp.auth.dto.AccessTokenResponse;
 import com.socialapp.auth.dto.AccountResponse;
 import com.socialapp.auth.dto.AuthResponse;
@@ -61,6 +62,7 @@ class AuthServiceTest {
     private JwtTokenProvider jwtTokenProvider;
 
     private KafkaTemplate<String, Object> kafkaTemplate;
+    private AdminEmailAllowlist adminEmailAllowlist;
 
     @InjectMocks
     private AuthService authService;
@@ -71,7 +73,10 @@ class AuthServiceTest {
         // @Mock in every environment, so build it explicitly and hand it to the
         // service — @InjectMocks still wires the @Mock fields above by type.
         kafkaTemplate = mock(KafkaTemplate.class);
-        authService = new AuthService(accountRepository, refreshTokenRepository, passwordEncoder, jwtTokenProvider, kafkaTemplate);
+        // Real instance (not a mock) — it's a plain value object once constructed,
+        // cheaper and clearer to just build it with the allowlist a given test needs.
+        adminEmailAllowlist = new AdminEmailAllowlist("admin@social.app, root@social.app");
+        authService = new AuthService(accountRepository, refreshTokenRepository, passwordEncoder, jwtTokenProvider, kafkaTemplate, adminEmailAllowlist);
     }
 
     private Account activeAccount(String id, String email, String hash) {
@@ -115,6 +120,40 @@ class AuthServiceTest {
         verify(kafkaTemplate).send(eq(KafkaTopics.USER_REGISTERED), eventCaptor.capture());
         assertThat(eventCaptor.getValue().email()).isEqualTo("new@social.app");
         assertThat(eventCaptor.getValue().fullName()).isEqualTo("New User");
+    }
+
+    @Test
+    void register_emailOnAdminAllowlist_grantsAdminRoleInAdditionToUser() {
+        RegisterRequest request = new RegisterRequest("admin@social.app", "P@ssw0rd", "Site Admin", null);
+        when(accountRepository.existsByEmail("admin@social.app")).thenReturn(false);
+        when(passwordEncoder.encode("P@ssw0rd")).thenReturn("hashed");
+        when(accountRepository.save(any(Account.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(jwtTokenProvider.generateAccessToken(any(), anyList())).thenReturn("access-token");
+        when(jwtTokenProvider.generateRefreshToken(any())).thenReturn("refresh-token");
+        when(jwtTokenProvider.getRefreshTokenExpirationMs()).thenReturn(604_800_000L);
+
+        authService.register(request);
+
+        ArgumentCaptor<Account> captor = ArgumentCaptor.forClass(Account.class);
+        verify(accountRepository).save(captor.capture());
+        assertThat(captor.getValue().getRoles()).containsExactlyInAnyOrder("USER", "ADMIN");
+    }
+
+    @Test
+    void register_emailNotOnAdminAllowlist_getsUserRoleOnly() {
+        RegisterRequest request = new RegisterRequest("nobody-special@social.app", "P@ssw0rd", "Regular User", null);
+        when(accountRepository.existsByEmail("nobody-special@social.app")).thenReturn(false);
+        when(passwordEncoder.encode("P@ssw0rd")).thenReturn("hashed");
+        when(accountRepository.save(any(Account.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(jwtTokenProvider.generateAccessToken(any(), anyList())).thenReturn("access-token");
+        when(jwtTokenProvider.generateRefreshToken(any())).thenReturn("refresh-token");
+        when(jwtTokenProvider.getRefreshTokenExpirationMs()).thenReturn(604_800_000L);
+
+        authService.register(request);
+
+        ArgumentCaptor<Account> captor = ArgumentCaptor.forClass(Account.class);
+        verify(accountRepository).save(captor.capture());
+        assertThat(captor.getValue().getRoles()).containsExactly("USER");
     }
 
     @Test

@@ -1,4 +1,5 @@
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\auth-service\src\main\java\com\socialapp\auth\AuthServiceApplication.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\auth-service\src\main\java\com\socialapp\auth\config\AdminEmailAllowlist.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\auth-service\src\main\java\com\socialapp\auth\config\SecurityConfig.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\auth-service\src\main\java\com\socialapp\auth\controller\AuthController.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\auth-service\src\main\java\com\socialapp\auth\dto\AccessTokenResponse.java

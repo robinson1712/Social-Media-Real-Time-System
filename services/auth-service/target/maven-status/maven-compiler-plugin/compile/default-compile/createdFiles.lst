@@ -1,3 +1,4 @@
+com\socialapp\auth\config\AdminEmailAllowlist.class
 com\socialapp\auth\dto\RegisterRequest.class
 com\socialapp\auth\entity\Account$AccountBuilder.class
 com\socialapp\auth\controller\AuthController.class

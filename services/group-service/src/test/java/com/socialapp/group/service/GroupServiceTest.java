@@ -2,6 +2,7 @@ package com.socialapp.group.service;
 
 import com.socialapp.common.event.GroupEvent;
 import com.socialapp.common.event.KafkaTopics;
+import com.socialapp.common.exception.BadRequestException;
 import com.socialapp.common.exception.ConflictException;
 import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
@@ -125,6 +126,30 @@ class GroupServiceTest {
 
         assertThatThrownBy(() -> groupService.createGroup(request))
                 .isInstanceOf(UnauthorizedException.class);
+
+        verify(groupRepository, never()).save(any());
+        verify(groupMemberRepository, never()).save(any());
+    }
+
+    @Test
+    void createGroup_profaneName_throwsBadRequestAndNeverSaves() {
+        CurrentUserContext.setForTests("owner-1", List.of("USER"));
+        CreateGroupRequest request = new CreateGroupRequest("fucking idiots group", "desc", GroupPrivacy.PUBLIC);
+
+        assertThatThrownBy(() -> groupService.createGroup(request))
+                .isInstanceOf(BadRequestException.class);
+
+        verify(groupRepository, never()).save(any());
+        verify(groupMemberRepository, never()).save(any());
+    }
+
+    @Test
+    void createGroup_profaneDescription_throwsBadRequestAndNeverSaves() {
+        CurrentUserContext.setForTests("owner-1", List.of("USER"));
+        CreateGroupRequest request = new CreateGroupRequest("My Group", "you fucking idiot", GroupPrivacy.PUBLIC);
+
+        assertThatThrownBy(() -> groupService.createGroup(request))
+                .isInstanceOf(BadRequestException.class);
 
         verify(groupRepository, never()).save(any());
         verify(groupMemberRepository, never()).save(any());
@@ -536,5 +561,28 @@ class GroupServiceTest {
     void myGroups_noAuthenticatedCaller_throwsUnauthorized() {
         assertThatThrownBy(() -> groupService.myGroups(PageRequest.of(0, 10)))
                 .isInstanceOf(UnauthorizedException.class);
+    }
+
+    // ---------- removeForModeration ----------
+
+    @Test
+    void removeForModeration_existing_deletesGroupAndAllMembers() {
+        Group group = existingGroup("group-1", "owner-1", GroupPrivacy.PUBLIC, 5);
+        when(groupRepository.findById("group-1")).thenReturn(Optional.of(group));
+
+        groupService.removeForModeration("group-1");
+
+        verify(groupMemberRepository).deleteByGroupId("group-1");
+        verify(groupRepository).delete(group);
+    }
+
+    @Test
+    void removeForModeration_missing_isNoOp() {
+        when(groupRepository.findById("missing")).thenReturn(Optional.empty());
+
+        groupService.removeForModeration("missing");
+
+        verify(groupMemberRepository, never()).deleteByGroupId(anyString());
+        verify(groupRepository, never()).delete(any(Group.class));
     }
 }

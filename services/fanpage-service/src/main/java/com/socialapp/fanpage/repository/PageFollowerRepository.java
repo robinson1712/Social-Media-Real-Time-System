@@ -14,4 +14,6 @@ public interface PageFollowerRepository extends JpaRepository<PageFollower, Stri
     Optional<PageFollower> findByPageIdAndUserId(String pageId, String userId);
 
     Page<PageFollower> findByPageId(String pageId, Pageable pageable);
+
+    void deleteByPageId(String pageId);
 }

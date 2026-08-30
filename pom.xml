@@ -44,6 +44,7 @@
         <module>services/chat-service</module>
         <module>services/notification-service</module>
         <module>services/feed-service</module>
+        <module>services/moderation-service</module>
     </modules>
 
     <dependencyManagement>

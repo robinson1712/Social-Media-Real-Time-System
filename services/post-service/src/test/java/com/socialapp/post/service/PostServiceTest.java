@@ -111,6 +111,48 @@ class PostServiceTest {
     }
 
     @Test
+    void createPost_profaneContent_throwsBadRequestAndNeverSaves() {
+        CurrentUserContext.setForTests("author-1", List.of("USER"));
+        CreatePostRequest request = new CreatePostRequest("what the fuck is this", null, Privacy.PUBLIC, null, null);
+
+        assertThatThrownBy(() -> postService.createPost(request))
+                .isInstanceOf(BadRequestException.class);
+
+        verify(postRepository, never()).save(any());
+        verify(kafkaTemplate, never()).send(any(), any(), any());
+    }
+
+    @Test
+    void updatePost_editingInProfanity_throwsBadRequestAndNeverSaves() {
+        CurrentUserContext.setForTests("author-1", List.of("USER"));
+        when(postRepository.findById("post-1")).thenReturn(Optional.of(existingPost("post-1", "author-1")));
+
+        assertThatThrownBy(() -> postService.updatePost("post-1", new UpdatePostRequest("you bitch", null, null)))
+                .isInstanceOf(BadRequestException.class);
+
+        verify(postRepository, never()).save(any());
+    }
+
+    @Test
+    void removeForModeration_existingPost_deletesIt() {
+        Post post = existingPost("post-1", "author-1");
+        when(postRepository.findById("post-1")).thenReturn(Optional.of(post));
+
+        postService.removeForModeration("post-1");
+
+        verify(postRepository).delete(post);
+    }
+
+    @Test
+    void removeForModeration_missingPost_isNoOp() {
+        when(postRepository.findById("missing")).thenReturn(Optional.empty());
+
+        postService.removeForModeration("missing");
+
+        verify(postRepository, never()).delete(any(Post.class));
+    }
+
+    @Test
     void getPost_found_returnsIt() {
         when(postRepository.findById("post-1")).thenReturn(Optional.of(existingPost("post-1", "author-1")));
 

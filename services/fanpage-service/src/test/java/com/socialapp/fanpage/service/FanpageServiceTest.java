@@ -129,6 +129,30 @@ class FanpageServiceTest {
         verify(pageAdminRepository, never()).save(any());
     }
 
+    @Test
+    void createPage_profaneName_throwsBadRequestAndNeverSaves() {
+        CurrentUserContext.setForTests("owner-1", List.of("USER"));
+        CreateFanpageRequest request = new CreateFanpageRequest("fucking idiots page", "Brand", "desc");
+
+        assertThatThrownBy(() -> fanpageService.createPage(request))
+                .isInstanceOf(BadRequestException.class);
+
+        verify(fanpageRepository, never()).save(any());
+        verify(pageAdminRepository, never()).save(any());
+    }
+
+    @Test
+    void createPage_profaneDescription_throwsBadRequestAndNeverSaves() {
+        CurrentUserContext.setForTests("owner-1", List.of("USER"));
+        CreateFanpageRequest request = new CreateFanpageRequest("My Page", "Brand", "you fucking idiot");
+
+        assertThatThrownBy(() -> fanpageService.createPage(request))
+                .isInstanceOf(BadRequestException.class);
+
+        verify(fanpageRepository, never()).save(any());
+        verify(pageAdminRepository, never()).save(any());
+    }
+
     // ---------- getPage ----------
 
     @Test
@@ -439,5 +463,30 @@ class FanpageServiceTest {
     void myManagedPages_noAuthenticatedCaller_throwsUnauthorized() {
         assertThatThrownBy(() -> fanpageService.myManagedPages(PageRequest.of(0, 10)))
                 .isInstanceOf(UnauthorizedException.class);
+    }
+
+    // ---------- removeForModeration ----------
+
+    @Test
+    void removeForModeration_existing_deletesPageAndFollowersAndAdmins() {
+        Fanpage page = existingPage("page-1", "owner-1", 5);
+        when(fanpageRepository.findById("page-1")).thenReturn(Optional.of(page));
+
+        fanpageService.removeForModeration("page-1");
+
+        verify(pageFollowerRepository).deleteByPageId("page-1");
+        verify(pageAdminRepository).deleteByPageId("page-1");
+        verify(fanpageRepository).delete(page);
+    }
+
+    @Test
+    void removeForModeration_missing_isNoOp() {
+        when(fanpageRepository.findById("missing")).thenReturn(Optional.empty());
+
+        fanpageService.removeForModeration("missing");
+
+        verify(pageFollowerRepository, never()).deleteByPageId(anyString());
+        verify(pageAdminRepository, never()).deleteByPageId(anyString());
+        verify(fanpageRepository, never()).delete(any(Fanpage.class));
     }
 }

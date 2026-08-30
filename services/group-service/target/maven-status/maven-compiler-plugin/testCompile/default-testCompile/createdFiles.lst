@@ -1,2 +1,3 @@
 com\socialapp\group\repository\GroupRepositoryIntegrationTest.class
 com\socialapp\group\service\GroupServiceTest.class
+com\socialapp\group\event\GroupModerationListenerTest.class

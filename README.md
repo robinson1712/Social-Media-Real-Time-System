@@ -28,7 +28,8 @@ Client (Web/Mobile)
         ├── dating-service (8091)        Postgres: dating_db
         ├── chat-service (8092)          MongoDB: chat_db + Redis (presence) — WebSocket /ws
         ├── notification-service (8093)  MongoDB: notification_db — WebSocket /ws
-        └── feed-service (8094)          Redis (sorted set fanout)
+        ├── feed-service (8094)          Redis (sorted set fanout)
+        └── moderation-service (8095)    Postgres: moderation_db — user report + admin review queue
 
   Config Server (8888) — cấp config tập trung (native, đọc từ ./config-repo)
   Kafka — giao tiếp bất đồng bộ giữa các service (post/comment/reaction/group/page/match/message events)
@@ -112,12 +113,25 @@ rồi chạy service bằng `mvn spring-boot:run` trong từng thư mục `servi
   `feed-service`): mỗi `@FeignClient` có `fallbackFactory` riêng, phân biệt lỗi nghiệp vụ (404 —
   vẫn báo lỗi đúng) với lỗi hạ tầng (service sập/timeout — trả `ServiceUnavailableException` 503
   hoặc giá trị rỗng tuỳ ngữ cảnh). Xem trạng thái circuit qua `actuator/circuitbreakers`.
+- **Observability**: distributed tracing (Zipkin) + centralized logging (Loki/Promtail/Grafana) —
+  xem mục Observability ở trên.
+- **CI/CD**: GitHub Actions (`.github/workflows/ci-cd.yml`) build+test toàn reactor, chạy
+  Testcontainers integration test, build Docker image cho mọi service, push GHCR khi merge `main`.
+- **Content moderation** (`moderation-service`, port 8095): profanity filter tự động (tiếng Anh +
+  tiếng Việt, giữ nguyên dấu thanh) chặn `post-service`/`comment-service`/`reels-service`/
+  `story-service`/`group-service`/`fanpage-service` lúc tạo nội dung — đủ cả 6 loại nội dung trong hệ
+  thống; user report nội dung vi phạm qua `POST /api/moderation/reports`; admin (role `ADMIN`) duyệt
+  hàng đợi qua `GET /api/moderation/reports`, xử lý `PUT /api/moderation/reports/{id}/resolve` với
+  `REMOVE_CONTENT` sẽ publish sự kiện Kafka xoá nội dung xuyên service (`group-service`/
+  `fanpage-service` xoá cascade cả bảng thành viên/follower/admin liên quan). Set biến môi trường
+  `ADMIN_EMAILS=admin@social.app,...` (comma-separated) trước khi build `auth-service` để các email
+  đó tự động có role `ADMIN` lúc đăng ký.
 
 ## Giới hạn còn lại
 
-Chưa có: kiểm duyệt nội dung (content moderation), rate-limit chi tiết ở gateway, test coverage
-(unit/integration test), CI/CD pipeline, observability/tracing (Zipkin/OpenTelemetry). Một vài đơn
-giản hoá có chủ đích còn lại (ghi rõ trong code bằng comment): `reaction-service` nhận
-`targetOwnerId` trực tiếp từ client thay vì tự resolve qua Feign (tránh phải có 3 Feign client cho
-POST/COMMENT/REEL); `fanpage-service` không có khái niệm private page (đúng theo thiết kế — fanpage
-luôn công khai, không cần sửa như group).
+Chưa có: rate-limit chi tiết hơn ở gateway cho route WebSocket, Prometheus/Grafana metrics dashboard,
+mở rộng content moderation sang reels/story/group/fanpage (hiện chỉ post/comment). Một vài đơn giản
+hoá có chủ đích còn lại (ghi rõ trong code bằng comment): `reaction-service` nhận `targetOwnerId`
+trực tiếp từ client thay vì tự resolve qua Feign (tránh phải có 3 Feign client cho POST/COMMENT/REEL);
+`fanpage-service` không có khái niệm private page (đúng theo thiết kế — fanpage luôn công khai,
+không cần sửa như group).

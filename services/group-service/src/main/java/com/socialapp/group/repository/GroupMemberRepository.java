@@ -17,4 +17,6 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, String
     Page<GroupMember> findByGroupIdAndStatus(String groupId, MemberStatus status, Pageable pageable);
 
     Page<GroupMember> findByUserIdAndStatus(String userId, MemberStatus status, Pageable pageable);
+
+    void deleteByGroupId(String groupId);
 }

@@ -8,6 +8,7 @@ x-app-env: &app-env
   REDIS_PORT: 6379
   JWT_SECRET: change-this-social-app-jwt-secret-key-must-be-at-least-256-bits
   ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+  ADMIN_EMAILS: admin@social.app
 
 services:
   # ---------- Infrastructure ----------
@@ -18,7 +19,7 @@ services:
       POSTGRES_USER: sma
       POSTGRES_PASSWORD: sma
       POSTGRES_DB: postgres
-      POSTGRES_MULTIPLE_DATABASES: auth_db,user_db,media_db,post_db,comment_db,reaction_db,group_db,fanpage_db,dating_db
+      POSTGRES_MULTIPLE_DATABASES: auth_db,user_db,media_db,post_db,comment_db,reaction_db,group_db,fanpage_db,dating_db,moderation_db
     ports:
       - "5432:5432"
     volumes:
@@ -346,6 +347,20 @@ services:
       - "8094:8094"
     depends_on:
       - redis
+      - kafka
+      - eureka-server
+
+  moderation-service:
+    build: ./services/moderation-service
+    container_name: sma-moderation-service
+    environment:
+      <<: *app-env
+      DB_HOST: postgres
+      DB_PORT: 5432
+    ports:
+      - "8095:8095"
+    depends_on:
+      - postgres
       - kafka
       - eureka-server
 

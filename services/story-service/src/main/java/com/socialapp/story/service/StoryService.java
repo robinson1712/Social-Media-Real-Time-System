@@ -2,8 +2,10 @@ package com.socialapp.story.service;
 
 import com.socialapp.common.event.KafkaTopics;
 import com.socialapp.common.event.StoryCreatedEvent;
+import com.socialapp.common.exception.BadRequestException;
 import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
+import com.socialapp.common.moderation.ProfanityFilter;
 import com.socialapp.common.security.CurrentUserContext;
 import com.socialapp.story.client.UserServiceClient;
 import com.socialapp.story.document.Story;
@@ -28,6 +30,7 @@ public class StoryService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public Story createStory(CreateStoryRequest request) {
+        rejectIfProfane(request.caption());
         String authorId = CurrentUserContext.getUserId();
         Instant now = Instant.now();
 
@@ -82,5 +85,16 @@ public class StoryService {
     private Story getStoryOrThrow(String id) {
         return storyRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Story not found: " + id));
+    }
+
+    /** Driven by moderation-service's ContentRemovedEvent — idempotent, a no-op if already gone. */
+    public void removeForModeration(String id) {
+        storyRepository.findById(id).ifPresent(storyRepository::delete);
+    }
+
+    private void rejectIfProfane(String content) {
+        if (ProfanityFilter.containsProfanity(content)) {
+            throw new BadRequestException("Content violates community guidelines");
+        }
     }
 }

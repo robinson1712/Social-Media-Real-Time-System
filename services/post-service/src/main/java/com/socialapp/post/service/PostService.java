@@ -5,6 +5,7 @@ import com.socialapp.common.event.PostCreatedEvent;
 import com.socialapp.common.exception.BadRequestException;
 import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
+import com.socialapp.common.moderation.ProfanityFilter;
 import com.socialapp.common.security.CurrentUserContext;
 import com.socialapp.post.dto.CreatePostRequest;
 import com.socialapp.post.dto.UpdatePostRequest;
@@ -33,6 +34,7 @@ public class PostService {
         if (!hasContent && !hasMedia) {
             throw new BadRequestException("A post requires at least content or media");
         }
+        rejectIfProfane(request.content());
 
         String authorId = CurrentUserContext.getUserId();
         Post post = Post.builder()
@@ -66,6 +68,7 @@ public class PostService {
             throw new ForbiddenException("Only the author can update this post");
         }
         if (request.content() != null) {
+            rejectIfProfane(request.content());
             post.setContent(request.content());
         }
         if (request.mediaUrls() != null) {
@@ -116,5 +119,16 @@ public class PostService {
             post.setReactionCount(Math.max(newCount, 0));
             postRepository.save(post);
         });
+    }
+
+    /** Driven by moderation-service's ContentRemovedEvent — idempotent, a no-op if already gone. */
+    public void removeForModeration(String postId) {
+        postRepository.findById(postId).ifPresent(postRepository::delete);
+    }
+
+    private void rejectIfProfane(String content) {
+        if (ProfanityFilter.containsProfanity(content)) {
+            throw new BadRequestException("Content violates community guidelines");
+        }
     }
 }

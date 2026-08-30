@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.socialapp.fanpage.service.FanpageServiceTest
 -------------------------------------------------------------------------------
-Tests run: 24, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.886 s -- in com.socialapp.fanpage.service.FanpageServiceTest
+Tests run: 28, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.009 s -- in com.socialapp.fanpage.service.FanpageServiceTest

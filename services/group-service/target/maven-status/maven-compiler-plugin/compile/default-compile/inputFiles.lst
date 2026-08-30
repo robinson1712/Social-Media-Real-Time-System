@@ -5,6 +5,7 @@ C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\entity\GroupPrivacy.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\entity\MemberRole.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\entity\MemberStatus.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\event\GroupModerationListener.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\GroupServiceApplication.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\repository\GroupMemberRepository.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\group-service\src\main\java\com\socialapp\group\repository\GroupRepository.java

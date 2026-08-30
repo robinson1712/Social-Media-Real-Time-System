@@ -16,4 +16,5 @@ public final class KafkaTopics {
     public static final String PAGE = "page-events";
     public static final String MATCH = "match-events";
     public static final String MESSAGE = "message-events";
+    public static final String CONTENT_REMOVED = "content-removed-events";
 }

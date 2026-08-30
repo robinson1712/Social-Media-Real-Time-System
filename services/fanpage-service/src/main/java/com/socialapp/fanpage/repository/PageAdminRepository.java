@@ -15,4 +15,6 @@ public interface PageAdminRepository extends JpaRepository<PageAdmin, String> {
     long countByPageIdAndRole(String pageId, AdminRole role);
 
     Page<PageAdmin> findByUserId(String userId, Pageable pageable);
+
+    void deleteByPageId(String pageId);
 }

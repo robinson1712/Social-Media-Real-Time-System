@@ -7,6 +7,7 @@ import com.socialapp.common.exception.ConflictException;
 import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
 import com.socialapp.common.exception.UnauthorizedException;
+import com.socialapp.common.moderation.ProfanityFilter;
 import com.socialapp.common.security.CurrentUserContext;
 import com.socialapp.fanpage.dto.AddAdminRequest;
 import com.socialapp.fanpage.dto.CreateFanpageRequest;
@@ -43,6 +44,8 @@ public class FanpageService {
     @Transactional
     public Fanpage createPage(CreateFanpageRequest request) {
         String userId = requireUserId();
+        rejectIfProfane(request.name());
+        rejectIfProfane(request.description());
 
         Fanpage page = Fanpage.builder()
                 .name(request.name())
@@ -182,5 +185,21 @@ public class FanpageService {
             throw new UnauthorizedException("Authentication required");
         }
         return userId;
+    }
+
+    /** Driven by moderation-service's ContentRemovedEvent — idempotent, a no-op if already gone. */
+    @Transactional
+    public void removeForModeration(String pageId) {
+        fanpageRepository.findById(pageId).ifPresent(page -> {
+            pageFollowerRepository.deleteByPageId(pageId);
+            pageAdminRepository.deleteByPageId(pageId);
+            fanpageRepository.delete(page);
+        });
+    }
+
+    private void rejectIfProfane(String content) {
+        if (ProfanityFilter.containsProfanity(content)) {
+            throw new BadRequestException("Content violates community guidelines");
+        }
     }
 }

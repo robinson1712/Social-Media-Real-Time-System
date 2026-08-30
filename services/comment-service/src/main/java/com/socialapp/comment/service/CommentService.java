@@ -12,6 +12,7 @@ import com.socialapp.common.event.KafkaTopics;
 import com.socialapp.common.exception.BadRequestException;
 import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
+import com.socialapp.common.moderation.ProfanityFilter;
 import com.socialapp.common.security.CurrentUserContext;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ public class CommentService {
         if (request.content() == null || request.content().isBlank()) {
             throw new BadRequestException("content must not be blank");
         }
+        rejectIfProfane(request.content());
 
         String postOwnerId = resolvePostOwnerId(request.postId());
         String authorId = CurrentUserContext.getUserId();
@@ -94,6 +96,7 @@ public class CommentService {
         if (!comment.getAuthorId().equals(currentUserId)) {
             throw new ForbiddenException("Only the author can edit this comment");
         }
+        rejectIfProfane(request.content());
         comment.setContent(request.content());
         comment.setUpdatedAt(Instant.now());
         return commentRepository.save(comment);
@@ -108,5 +111,20 @@ public class CommentService {
         comment.setDeleted(true);
         comment.setUpdatedAt(Instant.now());
         commentRepository.save(comment);
+    }
+
+    /** Driven by moderation-service's ContentRemovedEvent — idempotent soft-delete. */
+    public void removeForModeration(String commentId) {
+        commentRepository.findById(commentId).ifPresent(comment -> {
+            comment.setDeleted(true);
+            comment.setUpdatedAt(Instant.now());
+            commentRepository.save(comment);
+        });
+    }
+
+    private void rejectIfProfane(String content) {
+        if (ProfanityFilter.containsProfanity(content)) {
+            throw new BadRequestException("Content violates community guidelines");
+        }
     }
 }

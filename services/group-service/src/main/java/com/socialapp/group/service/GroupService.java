@@ -2,10 +2,12 @@ package com.socialapp.group.service;
 
 import com.socialapp.common.event.GroupEvent;
 import com.socialapp.common.event.KafkaTopics;
+import com.socialapp.common.exception.BadRequestException;
 import com.socialapp.common.exception.ConflictException;
 import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
 import com.socialapp.common.exception.UnauthorizedException;
+import com.socialapp.common.moderation.ProfanityFilter;
 import com.socialapp.common.security.CurrentUserContext;
 import com.socialapp.group.dto.CreateGroupRequest;
 import com.socialapp.group.entity.Group;
@@ -40,6 +42,8 @@ public class GroupService {
     @Transactional
     public Group createGroup(CreateGroupRequest request) {
         String userId = requireUserId();
+        rejectIfProfane(request.name());
+        rejectIfProfane(request.description());
 
         Group group = Group.builder()
                 .name(request.name())
@@ -218,5 +222,20 @@ public class GroupService {
             throw new UnauthorizedException("Authentication required");
         }
         return userId;
+    }
+
+    /** Driven by moderation-service's ContentRemovedEvent — idempotent, a no-op if already gone. */
+    @Transactional
+    public void removeForModeration(String groupId) {
+        groupRepository.findById(groupId).ifPresent(group -> {
+            groupMemberRepository.deleteByGroupId(groupId);
+            groupRepository.delete(group);
+        });
+    }
+
+    private void rejectIfProfane(String content) {
+        if (ProfanityFilter.containsProfanity(content)) {
+            throw new BadRequestException("Content violates community guidelines");
+        }
     }
 }

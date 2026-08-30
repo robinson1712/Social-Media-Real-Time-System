@@ -2,6 +2,7 @@ package com.socialapp.story.service;
 
 import com.socialapp.common.event.KafkaTopics;
 import com.socialapp.common.event.StoryCreatedEvent;
+import com.socialapp.common.exception.BadRequestException;
 import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
 import com.socialapp.common.security.CurrentUserContext;
@@ -94,6 +95,18 @@ class StoryServiceTest {
         verify(kafkaTemplate).send(eq(KafkaTopics.STORY_CREATED), eq("author-1"), captor.capture());
         assertThat(captor.getValue().storyId()).isEqualTo(saved.getId());
         assertThat(captor.getValue().authorId()).isEqualTo("author-1");
+    }
+
+    @Test
+    void createStory_profaneCaption_throwsBadRequestAndNeverSaves() {
+        CurrentUserContext.setForTests("author-1", List.of("USER"));
+        CreateStoryRequest request = new CreateStoryRequest("http://media/1.png", MediaType.IMAGE, "you fucking idiot");
+
+        assertThatThrownBy(() -> storyService.createStory(request))
+                .isInstanceOf(BadRequestException.class);
+
+        verify(storyRepository, never()).save(any());
+        verify(kafkaTemplate, never()).send(any(), any(), any());
     }
 
     @Test
@@ -217,6 +230,25 @@ class StoryServiceTest {
 
         assertThatThrownBy(() -> storyService.deleteStory("missing"))
                 .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(storyRepository, never()).delete(any(Story.class));
+    }
+
+    @Test
+    void removeForModeration_existing_deletesIt() {
+        Story story = existingStory("story-1", "author-1");
+        when(storyRepository.findById("story-1")).thenReturn(Optional.of(story));
+
+        storyService.removeForModeration("story-1");
+
+        verify(storyRepository).delete(story);
+    }
+
+    @Test
+    void removeForModeration_missing_isNoOp() {
+        when(storyRepository.findById("missing")).thenReturn(Optional.empty());
+
+        storyService.removeForModeration("missing");
 
         verify(storyRepository, never()).delete(any(Story.class));
     }

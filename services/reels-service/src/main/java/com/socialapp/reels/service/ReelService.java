@@ -2,8 +2,10 @@ package com.socialapp.reels.service;
 
 import com.socialapp.common.event.KafkaTopics;
 import com.socialapp.common.event.ReelCreatedEvent;
+import com.socialapp.common.exception.BadRequestException;
 import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
+import com.socialapp.common.moderation.ProfanityFilter;
 import com.socialapp.common.security.CurrentUserContext;
 import com.socialapp.reels.document.Reel;
 import com.socialapp.reels.dto.CreateReelRequest;
@@ -25,6 +27,7 @@ public class ReelService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public Reel createReel(CreateReelRequest request) {
+        rejectIfProfane(request.caption());
         String authorId = CurrentUserContext.getUserId();
 
         Reel reel = Reel.builder()
@@ -75,5 +78,16 @@ public class ReelService {
     private Reel getReelOrThrow(String id) {
         return reelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Reel not found: " + id));
+    }
+
+    /** Driven by moderation-service's ContentRemovedEvent — idempotent, a no-op if already gone. */
+    public void removeForModeration(String id) {
+        reelRepository.findById(id).ifPresent(reelRepository::delete);
+    }
+
+    private void rejectIfProfane(String content) {
+        if (ProfanityFilter.containsProfanity(content)) {
+            throw new BadRequestException("Content violates community guidelines");
+        }
     }
 }

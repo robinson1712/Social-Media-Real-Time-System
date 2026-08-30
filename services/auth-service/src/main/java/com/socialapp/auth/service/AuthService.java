@@ -1,5 +1,6 @@
 package com.socialapp.auth.service;
 
+import com.socialapp.auth.config.AdminEmailAllowlist;
 import com.socialapp.auth.dto.AccessTokenResponse;
 import com.socialapp.auth.dto.AccountResponse;
 import com.socialapp.auth.dto.AuthResponse;
@@ -24,6 +25,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +37,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final AdminEmailAllowlist adminEmailAllowlist;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -41,12 +45,17 @@ public class AuthService {
             throw new ConflictException("Email already in use");
         }
 
+        List<String> roles = adminEmailAllowlist.isAdmin(request.email())
+                ? List.of("USER", "ADMIN")
+                : List.of("USER");
+
         Account account = Account.builder()
                 .email(request.email())
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .phone(request.phone())
                 .fullName(request.fullName())
                 .status(AccountStatus.ACTIVE)
+                .roles(new ArrayList<>(roles))
                 .build();
         account = accountRepository.save(account);
 

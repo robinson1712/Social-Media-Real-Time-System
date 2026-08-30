@@ -106,6 +106,50 @@ class CommentServiceTest {
     }
 
     @Test
+    void createComment_profaneContent_throwsBadRequestBeforeEverCallingPostService() {
+        CurrentUserContext.setForTests("author-1", List.of("USER"));
+        CreateCommentRequest request = new CreateCommentRequest("post-1", "you fucking idiot", null);
+
+        assertThatThrownBy(() -> commentService.createComment(request))
+                .isInstanceOf(BadRequestException.class);
+
+        verify(postClient, never()).getPost(any());
+        verify(commentRepository, never()).save(any());
+    }
+
+    @Test
+    void updateComment_editingInProfanity_throwsBadRequestAndNeverSaves() {
+        CurrentUserContext.setForTests("author-1", List.of("USER"));
+        when(commentRepository.findById("c-1")).thenReturn(Optional.of(existingComment("c-1", "author-1", "post-1")));
+
+        assertThatThrownBy(() -> commentService.updateComment("c-1", new UpdateCommentRequest("you bitch")))
+                .isInstanceOf(BadRequestException.class);
+
+        verify(commentRepository, never()).save(any());
+    }
+
+    @Test
+    void removeForModeration_existingComment_softDeletesIt() {
+        Comment comment = existingComment("c-1", "author-1", "post-1");
+        when(commentRepository.findById("c-1")).thenReturn(Optional.of(comment));
+        when(commentRepository.save(any(Comment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        commentService.removeForModeration("c-1");
+
+        assertThat(comment.isDeleted()).isTrue();
+        verify(commentRepository).save(comment);
+    }
+
+    @Test
+    void removeForModeration_missingComment_isNoOp() {
+        when(commentRepository.findById("missing")).thenReturn(Optional.empty());
+
+        commentService.removeForModeration("missing");
+
+        verify(commentRepository, never()).save(any());
+    }
+
+    @Test
     void createComment_reply_setsParentCommentIdOnEntityAndEvent() {
         CurrentUserContext.setForTests("author-2", List.of("USER"));
         CreateCommentRequest request = new CreateCommentRequest("post-1", "A reply", "parent-comment-1");

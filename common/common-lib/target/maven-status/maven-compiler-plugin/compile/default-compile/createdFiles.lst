@@ -3,6 +3,7 @@ com\socialapp\common\event\ReactionEvent.class
 com\socialapp\common\event\StoryCreatedEvent.class
 com\socialapp\common\event\UserRegisteredEvent.class
 com\socialapp\common\exception\GlobalExceptionHandler.class
+com\socialapp\common\event\ContentRemovedEvent.class
 com\socialapp\common\event\FriendRequestEvent.class
 com\socialapp\common\event\GroupEvent.class
 com\socialapp\common\event\PageEvent.class
@@ -21,6 +22,7 @@ com\socialapp\common\exception\ApiException.class
 com\socialapp\common\enums\ReactionType.class
 com\socialapp\common\security\CurrentUserContext.class
 com\socialapp\common\exception\UnauthorizedException.class
+com\socialapp\common\moderation\ProfanityFilter.class
 com\socialapp\common\enums\TargetType.class
 com\socialapp\common\exception\ServiceUnavailableException.class
 com\socialapp\common\security\HeaderAuthFilter.class

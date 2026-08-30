@@ -38,6 +38,13 @@ eureka:
       defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true
+
+# Comma-separated emails that get ADMIN (in addition to USER) the moment they
+# register — see AdminEmailAllowlist. Empty by default, i.e. nobody is admin
+# until this is set. Example: ADMIN_EMAILS=admin@social.app,mod@social.app
+moderation:
+  admin-emails: ${ADMIN_EMAILS:}
+
 management:
   tracing:
     sampling:

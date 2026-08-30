@@ -2,6 +2,7 @@ package com.socialapp.reels.service;
 
 import com.socialapp.common.event.KafkaTopics;
 import com.socialapp.common.event.ReelCreatedEvent;
+import com.socialapp.common.exception.BadRequestException;
 import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
 import com.socialapp.common.security.CurrentUserContext;
@@ -90,6 +91,18 @@ class ReelServiceTest {
         verify(kafkaTemplate).send(eq(KafkaTopics.REEL_CREATED), eq("author-1"), captor.capture());
         assertThat(captor.getValue().reelId()).isEqualTo(saved.getId());
         assertThat(captor.getValue().authorId()).isEqualTo("author-1");
+    }
+
+    @Test
+    void createReel_profaneCaption_throwsBadRequestAndNeverSaves() {
+        CurrentUserContext.setForTests("author-1", List.of("USER"));
+        CreateReelRequest request = new CreateReelRequest("http://media/video.mp4", "http://media/thumb.png", "you fucking idiot");
+
+        assertThatThrownBy(() -> reelService.createReel(request))
+                .isInstanceOf(BadRequestException.class);
+
+        verify(reelRepository, never()).save(any());
+        verify(kafkaTemplate, never()).send(any(), any(), any());
     }
 
     @Test
@@ -186,6 +199,25 @@ class ReelServiceTest {
 
         assertThatThrownBy(() -> reelService.deleteReel("missing"))
                 .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(reelRepository, never()).delete(any(Reel.class));
+    }
+
+    @Test
+    void removeForModeration_existing_deletesIt() {
+        Reel reel = existingReel("reel-1", "author-1");
+        when(reelRepository.findById("reel-1")).thenReturn(Optional.of(reel));
+
+        reelService.removeForModeration("reel-1");
+
+        verify(reelRepository).delete(reel);
+    }
+
+    @Test
+    void removeForModeration_missing_isNoOp() {
+        when(reelRepository.findById("missing")).thenReturn(Optional.empty());
+
+        reelService.removeForModeration("missing");
 
         verify(reelRepository, never()).delete(any(Reel.class));
     }

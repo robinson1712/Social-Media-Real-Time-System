@@ -1,9 +1,11 @@
 package com.socialapp.reels.listener;
 
 import com.socialapp.common.event.CommentCreatedEvent;
+import com.socialapp.common.event.ContentRemovedEvent;
 import com.socialapp.common.event.ReactionEvent;
 import com.socialapp.reels.document.Reel;
 import com.socialapp.reels.repository.ReelRepository;
+import com.socialapp.reels.service.ReelService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -28,12 +30,14 @@ class ReelEventListenerTest {
 
     @Mock
     private ReelRepository reelRepository;
+    @Mock
+    private ReelService reelService;
 
     private ReelEventListener listener;
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        listener = new ReelEventListener(reelRepository);
+        listener = new ReelEventListener(reelRepository, reelService);
     }
 
     private Reel existingReel(String id) {
@@ -136,5 +140,23 @@ class ReelEventListenerTest {
         listener.onReaction(event);
 
         verify(reelRepository, never()).save(any());
+    }
+
+    @Test
+    void onContentRemoved_forReelTarget_delegatesToReelService() {
+        ContentRemovedEvent event = new ContentRemovedEvent("REEL", "reel-1", "report-1", "SPAM", Instant.now());
+
+        listener.onContentRemoved(event);
+
+        verify(reelService).removeForModeration("reel-1");
+    }
+
+    @Test
+    void onContentRemoved_forNonReelTarget_isIgnored() {
+        ContentRemovedEvent event = new ContentRemovedEvent("POST", "post-1", "report-1", "SPAM", Instant.now());
+
+        listener.onContentRemoved(event);
+
+        verify(reelService, never()).removeForModeration(any());
     }
 }

@@ -4,6 +4,7 @@ C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\enums\ReactionType.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\enums\TargetType.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\CommentCreatedEvent.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\ContentRemovedEvent.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\FriendRequestEvent.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\GroupEvent.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\KafkaTopics.java
@@ -23,6 +24,7 @@ C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\exception\ResourceNotFoundException.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\exception\ServiceUnavailableException.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\exception\UnauthorizedException.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\moderation\ProfanityFilter.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\security\CurrentUserContext.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\security\HeaderAuthFilter.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\security\JwtTokenProvider.java

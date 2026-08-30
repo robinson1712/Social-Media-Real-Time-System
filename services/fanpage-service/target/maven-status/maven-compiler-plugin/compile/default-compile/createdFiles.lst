@@ -2,6 +2,7 @@ com\socialapp\fanpage\entity\AdminRole.class
 com\socialapp\fanpage\dto\AddAdminRequest.class
 com\socialapp\fanpage\repository\FanpageRepository.class
 com\socialapp\fanpage\entity\PageFollower$PageFollowerBuilder.class
+com\socialapp\fanpage\event\FanpageModerationListener.class
 com\socialapp\fanpage\controller\FanpageController.class
 com\socialapp\fanpage\entity\PageAdmin.class
 com\socialapp\fanpage\repository\PageFollowerRepository.class

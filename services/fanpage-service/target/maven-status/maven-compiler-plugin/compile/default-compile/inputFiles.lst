@@ -5,6 +5,7 @@ C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\ma
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\entity\Fanpage.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\entity\PageAdmin.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\entity\PageFollower.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\event\FanpageModerationListener.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\FanpageServiceApplication.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\repository\FanpageRepository.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\fanpage-service\src\main\java\com\socialapp\fanpage\repository\PageAdminRepository.java

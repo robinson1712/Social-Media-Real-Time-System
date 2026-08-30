@@ -4,6 +4,7 @@ com\socialapp\story\document\MediaType.class
 com\socialapp\story\document\Story$StoryBuilder.class
 com\socialapp\story\controller\StoryController.class
 com\socialapp\story\StoryServiceApplication.class
+com\socialapp\story\listener\StoryEventListener.class
 com\socialapp\story\document\Story.class
 com\socialapp\story\client\UserServiceClientFallbackFactory.class
 com\socialapp\story\repository\StoryRepository.class
