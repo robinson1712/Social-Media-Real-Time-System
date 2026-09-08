@@ -6,6 +6,7 @@ import com.socialapp.comment.entity.Comment;
 import com.socialapp.comment.service.CommentService;
 import com.socialapp.common.dto.ApiResponse;
 import com.socialapp.common.dto.PageResponse;
+import com.socialapp.common.enums.TargetType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,13 +36,17 @@ public class CommentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Comment created", comment));
     }
 
-    @GetMapping("/post/{postId}")
+    // Was /post/{postId} — reels need comments too now, so the target is a
+    // (targetType, targetId) pair instead of an implicit "always a post" path.
+    @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<Comment>>> getTopLevelComments(
-            @PathVariable String postId,
+            @RequestParam TargetType targetType,
+            @RequestParam String targetId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(commentService.getTopLevelComments(postId, pageable))));
+        return ResponseEntity.ok(ApiResponse.success(
+                PageResponse.from(commentService.getTopLevelComments(targetType, targetId, pageable))));
     }
 
     @GetMapping("/{id}/replies")

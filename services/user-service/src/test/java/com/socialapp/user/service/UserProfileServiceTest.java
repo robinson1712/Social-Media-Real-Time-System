@@ -1,5 +1,6 @@
 package com.socialapp.user.service;
 
+import com.socialapp.common.exception.BadRequestException;
 import com.socialapp.common.exception.ResourceNotFoundException;
 import com.socialapp.common.exception.UnauthorizedException;
 import com.socialapp.user.dto.UpdateProfileRequest;
@@ -13,10 +14,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -106,7 +112,8 @@ class UserProfileServiceTest {
         when(userProfileRepository.save(any(UserProfile.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // Only fullName and location provided; bio, dob, gender left null (unchanged).
-        UpdateProfileRequest request = new UpdateProfileRequest("Alice Updated", null, null, null, "Da Nang");
+        UpdateProfileRequest request =
+                new UpdateProfileRequest("Alice Updated", null, null, null, "Da Nang", null, null);
 
         UserProfileResponse response = userProfileService.updateMe("user-1", request);
 
@@ -128,7 +135,7 @@ class UserProfileServiceTest {
         when(userProfileRepository.save(any(UserProfile.class))).thenAnswer(inv -> inv.getArgument(0));
 
         UpdateProfileRequest request = new UpdateProfileRequest(
-                "New Name", "New bio", LocalDate.of(2000, 1, 1), Gender.MALE, "Saigon");
+                "New Name", "New bio", LocalDate.of(2000, 1, 1), Gender.MALE, "Saigon", null, false);
 
         UserProfileResponse response = userProfileService.updateMe("user-1", request);
 
@@ -137,11 +144,27 @@ class UserProfileServiceTest {
         assertThat(response.dob()).isEqualTo(LocalDate.of(2000, 1, 1));
         assertThat(response.gender()).isEqualTo(Gender.MALE);
         assertThat(response.location()).isEqualTo("Saigon");
+        assertThat(response.readReceiptsEnabled()).isFalse();
+    }
+
+    @Test
+    void updateMe_readReceiptsOmitted_leavesExistingValueUnchanged() {
+        UserProfile existing = profile("user-1");
+        existing.setReadReceiptsEnabled(false);
+        when(userProfileRepository.findById("user-1")).thenReturn(Optional.of(existing));
+        when(userProfileRepository.save(any(UserProfile.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UpdateProfileRequest request =
+                new UpdateProfileRequest("Alice Updated", null, null, null, null, null, null);
+
+        UserProfileResponse response = userProfileService.updateMe("user-1", request);
+
+        assertThat(response.readReceiptsEnabled()).isFalse();
     }
 
     @Test
     void updateMe_notAuthenticated_throwsUnauthorizedAndNeverSaves() {
-        UpdateProfileRequest request = new UpdateProfileRequest("X", null, null, null, null);
+        UpdateProfileRequest request = new UpdateProfileRequest("X", null, null, null, null, null, null);
 
         assertThatThrownBy(() -> userProfileService.updateMe(null, request))
                 .isInstanceOf(UnauthorizedException.class);
@@ -152,7 +175,7 @@ class UserProfileServiceTest {
     @Test
     void updateMe_profileNotFound_throwsResourceNotFound() {
         when(userProfileRepository.findById("user-1")).thenReturn(Optional.empty());
-        UpdateProfileRequest request = new UpdateProfileRequest("X", null, null, null, null);
+        UpdateProfileRequest request = new UpdateProfileRequest("X", null, null, null, null, null, null);
 
         assertThatThrownBy(() -> userProfileService.updateMe("user-1", request))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -225,10 +248,41 @@ class UserProfileServiceTest {
         when(userProfileRepository.save(any(UserProfile.class))).thenAnswer(inv -> inv.getArgument(0));
         ArgumentCaptor<UserProfile> captor = ArgumentCaptor.forClass(UserProfile.class);
 
-        userProfileService.updateMe("user-1", new UpdateProfileRequest("Captured Name", null, null, null, null));
+        userProfileService.updateMe(
+                "user-1", new UpdateProfileRequest("Captured Name", null, null, null, null, null, null));
 
         verify(userProfileRepository).save(captor.capture());
         assertThat(captor.getValue().getFullName()).isEqualTo("Captured Name");
         assertThat(captor.getValue().getBio()).isEqualTo("Original bio");
+    }
+
+    @Test
+    void search_matchingQuery_returnsMappedPage() {
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<UserProfile> page = new PageImpl<>(List.of(profile("user-1")), pageable, 1);
+        when(userProfileRepository.findByFullNameContainingIgnoreCase("Alice", pageable)).thenReturn(page);
+
+        Page<UserProfileResponse> result = userProfileService.search("Alice", pageable);
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).fullName()).isEqualTo("Alice Original");
+    }
+
+    @Test
+    void search_blankQuery_throwsBadRequestAndNeverQueriesRepository() {
+        Pageable pageable = PageRequest.of(0, 20);
+
+        assertThatThrownBy(() -> userProfileService.search("   ", pageable))
+                .isInstanceOf(BadRequestException.class);
+
+        verify(userProfileRepository, never()).findByFullNameContainingIgnoreCase(any(), any());
+    }
+
+    @Test
+    void search_nullQuery_throwsBadRequest() {
+        Pageable pageable = PageRequest.of(0, 20);
+
+        assertThatThrownBy(() -> userProfileService.search(null, pageable))
+                .isInstanceOf(BadRequestException.class);
     }
 }

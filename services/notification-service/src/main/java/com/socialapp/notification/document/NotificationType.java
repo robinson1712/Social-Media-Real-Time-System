@@ -6,5 +6,7 @@ public enum NotificationType {
     REACTION,
     GROUP,
     MATCH,
-    MESSAGE
+    MESSAGE,
+    TAG,
+    FOLLOW
 }

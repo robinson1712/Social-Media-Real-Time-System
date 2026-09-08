@@ -12,10 +12,14 @@ public record PostDto(
         String content,
         List<String> mediaUrls,
         String privacy,
+        List<String> taggedUserIds,
         String groupId,
         String pageId,
+        String sharedPostId,
         long commentCount,
         long reactionCount,
+        boolean pinned,
+        long shareCount,
         Instant createdAt
 ) {
 }

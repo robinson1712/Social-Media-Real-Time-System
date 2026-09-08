@@ -45,6 +45,7 @@
         <module>services/notification-service</module>
         <module>services/feed-service</module>
         <module>services/moderation-service</module>
+        <module>services/search-service</module>
     </modules>
 
     <dependencyManagement>
@@ -86,6 +87,13 @@
             <dependency>
                 <groupId>org.springdoc</groupId>
                 <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+            <!-- api-gateway is WebFlux (Spring Cloud Gateway), so it needs the reactive
+                 variant to host the aggregated Swagger UI — see api-gateway/pom.xml. -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
                 <version>${springdoc.version}</version>
             </dependency>
             <dependency>

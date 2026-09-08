@@ -2,6 +2,7 @@ package com.socialapp.user.kafka;
 
 import com.socialapp.common.event.KafkaTopics;
 import com.socialapp.common.event.UserRegisteredEvent;
+import com.socialapp.user.entity.Gender;
 import com.socialapp.user.entity.UserProfile;
 import com.socialapp.user.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,10 +29,24 @@ public class UserRegisteredListener {
         UserProfile profile = UserProfile.builder()
                 .id(event.userId())
                 .fullName(event.fullName())
+                .gender(parseGender(event.gender()))
+                .dob(event.dob())
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
         userProfileRepository.save(profile);
         log.info("Created UserProfile for id={}", event.userId());
+    }
+
+    private Gender parseGender(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return Gender.valueOf(raw.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Ignoring unrecognized gender value at registration: {}", raw);
+            return null;
+        }
     }
 }

@@ -15,12 +15,15 @@ public record UserProfileResponse(
         LocalDate dob,
         Gender gender,
         String location,
+        String workplace,
+        boolean readReceiptsEnabled,
         Instant createdAt,
         Instant updatedAt
 ) {
     public static UserProfileResponse from(UserProfile p) {
         return new UserProfileResponse(
                 p.getId(), p.getFullName(), p.getAvatarUrl(), p.getCoverUrl(), p.getBio(),
-                p.getDob(), p.getGender(), p.getLocation(), p.getCreatedAt(), p.getUpdatedAt());
+                p.getDob(), p.getGender(), p.getLocation(), p.getWorkplace(), p.isReadReceiptsEnabled(),
+                p.getCreatedAt(), p.getUpdatedAt());
     }
 }

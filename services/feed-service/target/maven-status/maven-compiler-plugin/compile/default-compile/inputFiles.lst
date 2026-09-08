@@ -9,6 +9,7 @@ C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\consumer\PostCreatedConsumer.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\controller\FeedController.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\dto\GroupMemberDto.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\dto\MarkSeenRequest.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\dto\PageFollowerDto.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\dto\PostDto.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\feed-service\src\main\java\com\socialapp\feed\FeedServiceApplication.java

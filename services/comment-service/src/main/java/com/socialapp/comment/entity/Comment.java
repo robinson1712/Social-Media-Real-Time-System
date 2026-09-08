@@ -1,7 +1,10 @@
 package com.socialapp.comment.entity;
 
+import com.socialapp.common.enums.TargetType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -26,14 +29,22 @@ public class Comment {
     @Builder.Default
     private String id = UUID.randomUUID().toString();
 
+    /** What this comment is on — POST or REEL today; comment-service used to be
+     * hardcoded to posts (a "postId" column) until reels needed comments too,
+     * so this mirrors reaction-service's TargetType/targetId/targetOwnerId
+     * shape rather than special-casing a second content type. */
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String postId;
+    private TargetType targetType;
+
+    @Column(nullable = false)
+    private String targetId;
 
     @Column(nullable = false)
     private String authorId;
 
     @Column(nullable = false)
-    private String postOwnerId;
+    private String targetOwnerId;
 
     private String parentCommentId;
 

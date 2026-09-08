@@ -48,11 +48,15 @@ public class ChatStompController {
                 .senderId(senderId)
                 .content(request.content())
                 .mediaUrl(request.mediaUrl())
+                .storyReplyId(request.storyReplyId())
+                .storyReplyPreviewUrl(request.storyReplyPreviewUrl())
                 .sentAt(Instant.now())
                 .build();
         Message saved = messageRepository.save(message);
 
-        String preview = truncate(request.content());
+        String preview = request.content() == null || request.content().isBlank()
+                ? (request.mediaUrl() != null ? "Đã gửi tệp đính kèm" : null)
+                : truncate(request.content());
         conversation.setLastMessagePreview(preview);
         conversation.setLastMessageAt(saved.getSentAt());
         conversationRepository.save(conversation);

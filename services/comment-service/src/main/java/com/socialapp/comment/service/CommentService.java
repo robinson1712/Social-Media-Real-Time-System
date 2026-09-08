@@ -1,12 +1,10 @@
 package com.socialapp.comment.service;
 
-import com.socialapp.comment.client.PostClient;
 import com.socialapp.comment.dto.CreateCommentRequest;
-import com.socialapp.comment.dto.PostDto;
 import com.socialapp.comment.dto.UpdateCommentRequest;
 import com.socialapp.comment.entity.Comment;
 import com.socialapp.comment.repository.CommentRepository;
-import com.socialapp.common.dto.ApiResponse;
+import com.socialapp.common.enums.TargetType;
 import com.socialapp.common.event.CommentCreatedEvent;
 import com.socialapp.common.event.KafkaTopics;
 import com.socialapp.common.exception.BadRequestException;
@@ -14,7 +12,6 @@ import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
 import com.socialapp.common.moderation.ProfanityFilter;
 import com.socialapp.common.security.CurrentUserContext;
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,25 +25,30 @@ import java.time.Instant;
 public class CommentService {
 
     private final CommentRepository commentRepository;
-    private final PostClient postClient;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public Comment createComment(CreateCommentRequest request) {
-        if (request.postId() == null || request.postId().isBlank()) {
-            throw new BadRequestException("postId is required");
+        if (request.targetType() == null) {
+            throw new BadRequestException("targetType is required");
+        }
+        if (request.targetId() == null || request.targetId().isBlank()) {
+            throw new BadRequestException("targetId is required");
+        }
+        if (request.targetOwnerId() == null || request.targetOwnerId().isBlank()) {
+            throw new BadRequestException("targetOwnerId is required");
         }
         if (request.content() == null || request.content().isBlank()) {
             throw new BadRequestException("content must not be blank");
         }
         rejectIfProfane(request.content());
 
-        String postOwnerId = resolvePostOwnerId(request.postId());
         String authorId = CurrentUserContext.getUserId();
 
         Comment comment = Comment.builder()
-                .postId(request.postId())
+                .targetType(request.targetType())
+                .targetId(request.targetId())
                 .authorId(authorId)
-                .postOwnerId(postOwnerId)
+                .targetOwnerId(request.targetOwnerId())
                 .parentCommentId(request.parentCommentId())
                 .content(request.content())
                 .build();
@@ -54,27 +56,16 @@ public class CommentService {
         Comment saved = commentRepository.save(comment);
 
         CommentCreatedEvent event = new CommentCreatedEvent(
-                saved.getId(), saved.getPostId(), saved.getAuthorId(), saved.getPostOwnerId(),
-                saved.getParentCommentId(), Instant.now());
+                saved.getId(), saved.getTargetType().name(), saved.getTargetId(), saved.getAuthorId(),
+                saved.getTargetOwnerId(), saved.getParentCommentId(), Instant.now());
         kafkaTemplate.send(KafkaTopics.COMMENT_CREATED, saved.getId(), event);
 
         return saved;
     }
 
-    private String resolvePostOwnerId(String postId) {
-        try {
-            ApiResponse<PostDto> response = postClient.getPost(postId);
-            if (response == null || response.data() == null) {
-                throw new ResourceNotFoundException("Post not found: " + postId);
-            }
-            return response.data().authorId();
-        } catch (FeignException.NotFound ex) {
-            throw new ResourceNotFoundException("Post not found: " + postId);
-        }
-    }
-
-    public Page<Comment> getTopLevelComments(String postId, Pageable pageable) {
-        return commentRepository.findByPostIdAndParentCommentIdIsNullAndDeletedFalseOrderByCreatedAtDesc(postId, pageable);
+    public Page<Comment> getTopLevelComments(TargetType targetType, String targetId, Pageable pageable) {
+        return commentRepository.findByTargetTypeAndTargetIdAndParentCommentIdIsNullAndDeletedFalseOrderByCreatedAtDesc(
+                targetType, targetId, pageable);
     }
 
     public Page<Comment> getReplies(String parentCommentId, Pageable pageable) {

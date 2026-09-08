@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.socialapp.auth.service.AuthServiceTest
 -------------------------------------------------------------------------------
-Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.716 s -- in com.socialapp.auth.service.AuthServiceTest
+Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.816 s -- in com.socialapp.auth.service.AuthServiceTest

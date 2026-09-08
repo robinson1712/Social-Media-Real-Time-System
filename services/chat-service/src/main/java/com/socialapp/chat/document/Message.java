@@ -33,8 +33,16 @@ public class Message {
 
     private String mediaUrl;
 
+    /** Set when this message is a reply to a story — see {@link com.socialapp.chat.dto.ChatSendRequest}. */
+    private String storyReplyId;
+
+    private String storyReplyPreviewUrl;
+
     private Instant sentAt;
 
     @Builder.Default
     private Set<String> readBy = new HashSet<>();
+
+    @Builder.Default
+    private boolean deleted = false;
 }

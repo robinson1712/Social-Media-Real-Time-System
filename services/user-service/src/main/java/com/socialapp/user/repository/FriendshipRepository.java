@@ -40,4 +40,8 @@ public interface FriendshipRepository extends JpaRepository<Friendship, String> 
     @Query("select f from Friendship f where (f.requesterId = :userA and f.addresseeId = :userB) "
             + "or (f.requesterId = :userB and f.addresseeId = :userA)")
     Optional<Friendship> findAnyBetween(@Param("userA") String userA, @Param("userB") String userB);
+
+    @Query("select f from Friendship f where f.status = com.socialapp.user.entity.FriendshipStatus.PENDING "
+            + "and (f.requesterId = :userId or f.addresseeId = :userId)")
+    List<Friendship> findPendingInvolving(@Param("userId") String userId);
 }

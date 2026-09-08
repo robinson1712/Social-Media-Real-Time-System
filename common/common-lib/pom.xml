@@ -53,5 +53,15 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Every service depends on common-lib, so this is the one place to add
+             the Prometheus registry for all of them rather than editing 15+ poms.
+             Actuator itself is still declared per-service (it already was, for
+             health/circuitbreakers/tracing), this just adds the /actuator/prometheus
+             format. eureka-server and config-server don't depend on common-lib and
+             get it added directly in their own poms instead. -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
     </dependencies>
 </project>

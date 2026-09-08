@@ -134,4 +134,37 @@ class NotificationServiceTest {
 
         assertThat(count).isEqualTo(5L);
     }
+
+    @Test
+    void delete_owner_deletes() {
+        Notification notification = Notification.builder()
+                .id("notif-1").recipientId("alice").actorId("bob")
+                .type(NotificationType.MESSAGE).read(false).createdAt(Instant.now()).build();
+        when(notificationRepository.findById("notif-1")).thenReturn(Optional.of(notification));
+
+        notificationService.delete("notif-1", "alice");
+
+        verify(notificationRepository).delete(notification);
+    }
+
+    @Test
+    void delete_notOwner_throwsForbiddenAndNeverDeletes() {
+        Notification notification = Notification.builder()
+                .id("notif-1").recipientId("alice").actorId("bob")
+                .type(NotificationType.MESSAGE).read(false).createdAt(Instant.now()).build();
+        when(notificationRepository.findById("notif-1")).thenReturn(Optional.of(notification));
+
+        assertThatThrownBy(() -> notificationService.delete("notif-1", "eve"))
+                .isInstanceOf(ForbiddenException.class);
+
+        verify(notificationRepository, never()).delete(any(Notification.class));
+    }
+
+    @Test
+    void delete_notFound_throwsResourceNotFound() {
+        when(notificationRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> notificationService.delete("missing", "alice"))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
 }

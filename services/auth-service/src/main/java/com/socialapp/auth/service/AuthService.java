@@ -60,7 +60,8 @@ public class AuthService {
         account = accountRepository.save(account);
 
         kafkaTemplate.send(KafkaTopics.USER_REGISTERED,
-                new UserRegisteredEvent(account.getId(), account.getEmail(), account.getFullName(), Instant.now()));
+                new UserRegisteredEvent(account.getId(), account.getEmail(), account.getFullName(),
+                        request.gender(), request.dob(), Instant.now()));
 
         return issueTokens(account);
     }

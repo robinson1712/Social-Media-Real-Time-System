@@ -3,6 +3,7 @@ package com.socialapp.post.controller;
 import com.socialapp.common.dto.ApiResponse;
 import com.socialapp.common.dto.PageResponse;
 import com.socialapp.post.dto.CreatePostRequest;
+import com.socialapp.post.dto.ShareRequest;
 import com.socialapp.post.dto.UpdatePostRequest;
 import com.socialapp.post.entity.Post;
 import com.socialapp.post.service.PostService;
@@ -43,6 +44,15 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(postService.getPost(id)));
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<PageResponse<Post>>> search(
+            @RequestParam String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(postService.searchPublicPosts(q, pageable))));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<Post>> updatePost(@PathVariable String id, @RequestBody UpdatePostRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Post updated", postService.updatePost(id, request)));
@@ -59,8 +69,31 @@ public class PostController {
             @PathVariable String authorId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable pageable = PageRequest.of(page, size,
+                Sort.by(Sort.Order.desc("pinned"), Sort.Order.desc("createdAt")));
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(postService.getPostsByAuthor(authorId, pageable))));
+    }
+
+    @PutMapping("/{id}/pin")
+    public ResponseEntity<ApiResponse<Post>> pinPost(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success("Post pinned", postService.pinPost(id)));
+    }
+
+    @DeleteMapping("/{id}/pin")
+    public ResponseEntity<ApiResponse<Post>> unpinPost(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success("Post unpinned", postService.unpinPost(id)));
+    }
+
+    @PostMapping("/{id}/share")
+    public ResponseEntity<ApiResponse<Post>> sharePost(@PathVariable String id, @RequestBody ShareRequest request) {
+        Post shared = postService.sharePost(id, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Post shared", shared));
+    }
+
+    @PostMapping("/share-reel/{reelId}")
+    public ResponseEntity<ApiResponse<Post>> shareReel(@PathVariable String reelId, @RequestBody ShareRequest request) {
+        Post shared = postService.shareReel(reelId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Reel shared", shared));
     }
 
     @GetMapping("/group/{groupId}")

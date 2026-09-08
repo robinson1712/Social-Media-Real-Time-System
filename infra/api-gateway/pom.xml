@@ -58,6 +58,12 @@
             <groupId>io.zipkin.reporter2</groupId>
             <artifactId>zipkin-reporter-brave</artifactId>
         </dependency>
+        <!-- Hosts one aggregated Swagger UI here instead of 15 separate per-service
+             UIs on 15 separate ports — see springdoc.swagger-ui.urls in application.yml. -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

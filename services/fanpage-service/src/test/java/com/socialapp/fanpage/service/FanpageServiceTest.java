@@ -465,6 +465,51 @@ class FanpageServiceTest {
                 .isInstanceOf(UnauthorizedException.class);
     }
 
+    // ---------- myFollowedPages ----------
+
+    @Test
+    void myFollowedPages_mapsFollowerRowsToPagesAndPreservesTotalElements() {
+        CurrentUserContext.setForTests("follower-1", List.of("USER"));
+        Pageable pageable = PageRequest.of(0, 2);
+        PageFollower f1 = PageFollower.builder().pageId("page-1").userId("follower-1").build();
+        PageFollower f2 = PageFollower.builder().pageId("page-2").userId("follower-1").build();
+        PageImpl<PageFollower> followerPage = new PageImpl<>(List.of(f1, f2), pageable, 10);
+        when(pageFollowerRepository.findByUserId("follower-1", pageable)).thenReturn(followerPage);
+
+        Fanpage page1 = existingPage("page-1", "owner-1", 3);
+        Fanpage page2 = existingPage("page-2", "owner-2", 7);
+        when(fanpageRepository.findAllById(List.of("page-1", "page-2"))).thenReturn(List.of(page1, page2));
+
+        org.springframework.data.domain.Page<Fanpage> result = fanpageService.myFollowedPages(pageable);
+
+        assertThat(result.getContent()).containsExactly(page1, page2);
+        assertThat(result.getTotalElements()).isEqualTo(10);
+    }
+
+    @Test
+    void myFollowedPages_pageDeletedAfterFollowerRowCreated_isFilteredOutOfResults() {
+        CurrentUserContext.setForTests("follower-1", List.of("USER"));
+        Pageable pageable = PageRequest.of(0, 2);
+        PageFollower f1 = PageFollower.builder().pageId("page-1").userId("follower-1").build();
+        PageFollower f2 = PageFollower.builder().pageId("page-2").userId("follower-1").build();
+        PageImpl<PageFollower> followerPage = new PageImpl<>(List.of(f1, f2), pageable, 2);
+        when(pageFollowerRepository.findByUserId("follower-1", pageable)).thenReturn(followerPage);
+
+        Fanpage page1 = existingPage("page-1", "owner-1", 3);
+        when(fanpageRepository.findAllById(List.of("page-1", "page-2"))).thenReturn(List.of(page1));
+
+        org.springframework.data.domain.Page<Fanpage> result = fanpageService.myFollowedPages(pageable);
+
+        assertThat(result.getContent()).containsExactly(page1);
+        assertThat(result.getTotalElements()).isEqualTo(2);
+    }
+
+    @Test
+    void myFollowedPages_noAuthenticatedCaller_throwsUnauthorized() {
+        assertThatThrownBy(() -> fanpageService.myFollowedPages(PageRequest.of(0, 10)))
+                .isInstanceOf(UnauthorizedException.class);
+    }
+
     // ---------- removeForModeration ----------
 
     @Test

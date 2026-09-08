@@ -18,8 +18,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -96,9 +98,30 @@ public class ChatService {
         return Boolean.TRUE.equals(redisTemplate.hasKey("presence:" + userId));
     }
 
+    public Map<String, Boolean> onlineStatuses(List<String> userIds) {
+        Map<String, Boolean> result = new LinkedHashMap<>();
+        for (String userId : userIds) {
+            result.put(userId, isOnline(userId));
+        }
+        return result;
+    }
+
     public Conversation getConversationOrThrow(String id) {
         return conversationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Conversation not found: " + id));
+    }
+
+    /** Sender-only soft delete/recall — scrubs content so it can't be read back via the API. */
+    public Message deleteMessage(String messageId, String userId) {
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found: " + messageId));
+        if (!message.getSenderId().equals(userId)) {
+            throw new ForbiddenException("Only the sender may delete this message");
+        }
+        message.setDeleted(true);
+        message.setContent(null);
+        message.setMediaUrl(null);
+        return messageRepository.save(message);
     }
 
     public void ensurePrivateConversation(String user1Id, String user2Id) {

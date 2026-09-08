@@ -10,6 +10,7 @@ import com.socialapp.story.client.UserServiceClient;
 import com.socialapp.story.document.MediaType;
 import com.socialapp.story.document.Story;
 import com.socialapp.story.dto.CreateStoryRequest;
+import com.socialapp.story.dto.TextOverlayRequest;
 import com.socialapp.story.repository.StoryRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -80,7 +81,7 @@ class StoryServiceTest {
     @Test
     void createStory_savesWith24HourExpiryAndPublishesEvent() {
         CurrentUserContext.setForTests("author-1", List.of("USER"));
-        CreateStoryRequest request = new CreateStoryRequest("http://media/1.png", MediaType.IMAGE, "hello");
+        CreateStoryRequest request = new CreateStoryRequest("http://media/1.png", MediaType.IMAGE, "hello", null);
         when(storyRepository.save(any(Story.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Story saved = storyService.createStory(request);
@@ -100,13 +101,56 @@ class StoryServiceTest {
     @Test
     void createStory_profaneCaption_throwsBadRequestAndNeverSaves() {
         CurrentUserContext.setForTests("author-1", List.of("USER"));
-        CreateStoryRequest request = new CreateStoryRequest("http://media/1.png", MediaType.IMAGE, "you fucking idiot");
+        CreateStoryRequest request = new CreateStoryRequest("http://media/1.png", MediaType.IMAGE, "you fucking idiot", null);
 
         assertThatThrownBy(() -> storyService.createStory(request))
                 .isInstanceOf(BadRequestException.class);
 
         verify(storyRepository, never()).save(any());
         verify(kafkaTemplate, never()).send(any(), any(), any());
+    }
+
+    @Test
+    void createStory_withTextOverlays_mapsAllFieldsAndDefaultsMissingFontSize() {
+        CurrentUserContext.setForTests("author-1", List.of("USER"));
+        CreateStoryRequest request = new CreateStoryRequest("http://media/1.png", MediaType.IMAGE, null, List.of(
+                new TextOverlayRequest("Hello!", "Pacifico", "#FFFFFF", 0.5, 0.2, 32.0),
+                new TextOverlayRequest("no size", "Roboto", "#FF0000", 0.1, 0.9, null)
+        ));
+        when(storyRepository.save(any(Story.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Story saved = storyService.createStory(request);
+
+        assertThat(saved.getTextOverlays()).hasSize(2);
+        assertThat(saved.getTextOverlays().get(0).getText()).isEqualTo("Hello!");
+        assertThat(saved.getTextOverlays().get(0).getFontFamily()).isEqualTo("Pacifico");
+        assertThat(saved.getTextOverlays().get(0).getColor()).isEqualTo("#FFFFFF");
+        assertThat(saved.getTextOverlays().get(0).getFontSize()).isEqualTo(32.0);
+        assertThat(saved.getTextOverlays().get(1).getFontSize()).isEqualTo(24.0);
+    }
+
+    @Test
+    void createStory_profaneOverlayText_throwsBadRequestAndNeverSaves() {
+        CurrentUserContext.setForTests("author-1", List.of("USER"));
+        CreateStoryRequest request = new CreateStoryRequest("http://media/1.png", MediaType.IMAGE, null, List.of(
+                new TextOverlayRequest("you fucking idiot", "Roboto", "#FFFFFF", 0.5, 0.5, 24.0)
+        ));
+
+        assertThatThrownBy(() -> storyService.createStory(request))
+                .isInstanceOf(BadRequestException.class);
+
+        verify(storyRepository, never()).save(any());
+    }
+
+    @Test
+    void createStory_noTextOverlays_savesEmptyList() {
+        CurrentUserContext.setForTests("author-1", List.of("USER"));
+        CreateStoryRequest request = new CreateStoryRequest("http://media/1.png", MediaType.IMAGE, "hello", null);
+        when(storyRepository.save(any(Story.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Story saved = storyService.createStory(request);
+
+        assertThat(saved.getTextOverlays()).isEmpty();
     }
 
     @Test

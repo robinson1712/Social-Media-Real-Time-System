@@ -167,6 +167,23 @@ public class FanpageService {
         return new PageImpl<>(pages, pageable, adminRows.getTotalElements());
     }
 
+    public Page<Fanpage> myFollowedPages(Pageable pageable) {
+        String userId = requireUserId();
+        Page<PageFollower> followerRows = pageFollowerRepository.findByUserId(userId, pageable);
+
+        List<String> pageIds = followerRows.getContent().stream()
+                .map(PageFollower::getPageId)
+                .toList();
+        Map<String, Fanpage> pagesById = fanpageRepository.findAllById(pageIds).stream()
+                .collect(Collectors.toMap(Fanpage::getId, p -> p));
+        List<Fanpage> pages = pageIds.stream()
+                .map(pagesById::get)
+                .filter(Objects::nonNull)
+                .toList();
+
+        return new PageImpl<>(pages, pageable, followerRows.getTotalElements());
+    }
+
     private void requireAdminOrOwner(String pageId, String userId) {
         PageAdmin admin = pageAdminRepository.findByPageIdAndUserId(pageId, userId)
                 .orElseThrow(() -> new ForbiddenException("Only page admins or the owner may perform this action"));

@@ -93,7 +93,7 @@ class AuthServiceTest {
 
     @Test
     void register_createsAccountIssuesTokensAndPublishesEvent() {
-        RegisterRequest request = new RegisterRequest("new@social.app", "P@ssw0rd", "New User", null);
+        RegisterRequest request = new RegisterRequest("new@social.app", "P@ssw0rd", "New User", null, null, null);
         when(accountRepository.existsByEmail("new@social.app")).thenReturn(false);
         when(passwordEncoder.encode("P@ssw0rd")).thenReturn("hashed");
         // Account.id is only assigned by @PrePersist on a real save — simulate that here.
@@ -124,7 +124,7 @@ class AuthServiceTest {
 
     @Test
     void register_emailOnAdminAllowlist_grantsAdminRoleInAdditionToUser() {
-        RegisterRequest request = new RegisterRequest("admin@social.app", "P@ssw0rd", "Site Admin", null);
+        RegisterRequest request = new RegisterRequest("admin@social.app", "P@ssw0rd", "Site Admin", null, null, null);
         when(accountRepository.existsByEmail("admin@social.app")).thenReturn(false);
         when(passwordEncoder.encode("P@ssw0rd")).thenReturn("hashed");
         when(accountRepository.save(any(Account.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -141,7 +141,7 @@ class AuthServiceTest {
 
     @Test
     void register_emailNotOnAdminAllowlist_getsUserRoleOnly() {
-        RegisterRequest request = new RegisterRequest("nobody-special@social.app", "P@ssw0rd", "Regular User", null);
+        RegisterRequest request = new RegisterRequest("nobody-special@social.app", "P@ssw0rd", "Regular User", null, null, null);
         when(accountRepository.existsByEmail("nobody-special@social.app")).thenReturn(false);
         when(passwordEncoder.encode("P@ssw0rd")).thenReturn("hashed");
         when(accountRepository.save(any(Account.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -158,7 +158,7 @@ class AuthServiceTest {
 
     @Test
     void register_duplicateEmail_throwsConflictAndNeverSaves() {
-        RegisterRequest request = new RegisterRequest("taken@social.app", "P@ssw0rd", "Someone", null);
+        RegisterRequest request = new RegisterRequest("taken@social.app", "P@ssw0rd", "Someone", null, null, null);
         when(accountRepository.existsByEmail("taken@social.app")).thenReturn(true);
 
         assertThatThrownBy(() -> authService.register(request))

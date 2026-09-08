@@ -90,24 +90,25 @@ Build+test toàn reactor (`mvn clean install`, không `-DskipTests`): **18/18 mo
 |---|---|---|---|
 | `eureka-server` | 8761 | ✅ Xong | — |
 | `config-server` | 8888 | ✅ Xong | Đang bị dùng ít — có thể đẩy thêm config dùng chung (vd. resilience4j defaults) sang đây |
-| `api-gateway` | 8080 | ✅ Xong + rate limit | Route WebSocket `/ws/**` chưa có rate-limit |
+| `api-gateway` | 8080 | ✅ Xong + rate limit (kể cả route WebSocket) | — |
 | `auth-service` | 8081 | ✅ Xong + admin allowlist | Chưa có: reset mật khẩu, xác minh email, khoá tài khoản sau N lần login sai, OAuth2/social login |
-| `user-service` | 8082 | ✅ Xong | Chưa có: tìm kiếm user, gợi ý bạn chung |
-| `media-service` | 8083 | ✅ Xong | Chưa có: resize ảnh/tạo thumbnail, giới hạn dung lượng/loại file, transcode video |
-| `post-service` | 8084 | ✅ Xong + profanity filter + xoá theo report | Chưa có: lịch sử chỉnh sửa, ghim bài |
+| `user-service` | 8082 | ✅ Xong + tìm kiếm user | Chưa có: gợi ý bạn chung |
+| `media-service` | 8083 | ✅ Xong + whitelist content-type + giới hạn size theo purpose | Chưa có: resize ảnh/tạo thumbnail, transcode video |
+| `post-service` | 8084 | ✅ Xong + profanity filter + xoá theo report + ghim bài + share/tag/custom-audience + enforce privacy lúc đọc | Chưa có: lịch sử chỉnh sửa |
 | `comment-service` | 8085 | ✅ Xong + circuit breaker + profanity filter + xoá theo report | — |
 | `reaction-service` | 8086 | ✅ Xong | Đơn giản hoá có chủ đích: nhận `targetOwnerId` từ client thay vì tự resolve qua Feign |
 | `story-service` | 8087 | ✅ Xong + circuit breaker | Chưa có: story highlights (lưu vĩnh viễn), reply story qua chat |
-| `reels-service` | 8088 | ✅ Xong | Feed reels vẫn thuần theo thời gian (chưa áp dụng ranking như feed-service) |
-| `group-service` | 8089 | ✅ Xong + fix visibility | Chưa có: vai trò MODERATOR, kiểm duyệt bài đăng trong group |
+| `reels-service` | 8088 | ✅ Xong + engagement ranking (giống feed-service) | — |
+| `group-service` | 8089 | ✅ Xong + fix visibility + vai trò MODERATOR | Chưa có: kiểm duyệt bài đăng trong group |
 | `fanpage-service` | 8090 | ✅ Xong | Chưa có: thống kê/insight cho page |
-| `dating-service` | 8091 | ✅ Xong + matching algorithm | Chưa có: unmatch, report trong ngữ cảnh dating, xác minh ảnh |
-| `chat-service` | 8092 | ✅ Xong (WebSocket thật) | Chưa có: sửa/xoá tin nhắn, typing indicator, read-receipt chi tiết (hiện chỉ có mark-all-read) |
+| `dating-service` | 8091 | ✅ Xong + matching algorithm + unmatch | Chưa có: report trong ngữ cảnh dating, xác minh ảnh |
+| `chat-service` | 8092 | ✅ Xong (WebSocket thật) + xoá tin nhắn (sender-only) | Chưa có: sửa tin nhắn, typing indicator, read-receipt chi tiết (hiện chỉ có mark-all-read) |
 | `notification-service` | 8093 | ✅ Xong (WebSocket thật) | Chưa có: push notification ra mobile (FCM/APNs), cài đặt loại thông báo |
 | `feed-service` | 8094 | ✅ Xong + engagement ranking | Chưa gộp story/reels vào cùng feed logic |
 | `moderation-service` | 8095 | ✅ Xong (report + admin review queue) | Đã mở rộng đủ 6 loại: post/comment/reels/story/group/fanpage đều nghe `ContentRemovedEvent` |
+| `search-service` | 8096 | ✅ Xong (tìm kiếm tổng hợp, không có DB riêng) | Chưa có: xếp hạng kết quả theo độ liên quan (hiện chỉ trả theo thứ tự mỗi service tự sắp) |
 
-**15/15 business service + 3/3 hạ tầng đều đã hoàn thành scaffold và build được** — không có service nào còn ở dạng rỗng/chưa code.
+**16/16 business service + 3/3 hạ tầng đều đã hoàn thành scaffold và build được** — không có service nào còn ở dạng rỗng/chưa code. (16 = 15 service ban đầu + `search-service` mới thêm; `moderation-service` đã tính trong 15 đó.)
 
 ---
 
@@ -154,6 +155,18 @@ Repo đã có remote GitHub thật (`robinson1712/SE347-TSON-social-media-real-t
 **Đã commit + push (`adc4245`) và verify PASS 100% thật trên GitHub Actions** (run #1, ~5.5 phút, [xem log](https://github.com/robinson1712/SE347-TSON-social-media-real-time-system/actions/runs/33243483057)):
 - `build-and-test`: `mvn clean install` xanh + **`GroupRepositoryIntegrationTest` (Testcontainers) pass thật** trong 20s trên runner có Docker không giới hạn — xác nhận đúng dự đoán, không phải lỗi code.
 - `docker-images`: build + push cả 17 image lên GHCR thành công, dùng `GITHUB_TOKEN` có sẵn không cần secret riêng.
+
+**Lỗi phát hiện ở run #5 (sau khi thêm moderation-service + mở rộng sang reels/story/group/fanpage),
+đã sửa**: job `docker-images` fail ở bước push — log cho thấy `feed-service` (service cuối trong danh
+sách) bị lỗi `unknown blob` ngay sau dòng `Mounted from ...notification-service` (Docker cố cross-repo
+blob-mount 1 layer base dùng chung giữa 2 image GHCR, registry chưa kịp commit blob ở image trước).
+Đây là race condition đã biết của GHCR khi push nhiều image chia sẻ layer gốc liên tiếp trong cùng 1
+job — không phải lỗi code/Dockerfile (đã xác nhận: build lại cả 17 image y hệt bước CI ngay trên máy
+local, tất cả build thành công, không lỗi). Fix: bọc mỗi lệnh `docker push` trong hàm `push_with_retry`
+(retry tối đa 3 lần, nghỉ 10s giữa các lần). Tiện thể phát hiện và sửa luôn 1 gap riêng: `moderation-service`
+(thêm từ 2 commit trước) chưa từng có trong danh sách `SERVICES` của CI — chưa từng được build/push.
+Cũng cập nhật job name/step name từ "279 unit tests" (số cũ, đã lỗi thời) lên đúng **334 unit tests**
+hiện tại.
 
 ## ✅ Content moderation
 
@@ -258,13 +271,393 @@ cleanup (bảng phụ thuộc `GroupMember`, `PageAdmin`/`PageFollower`):
 `reels-service`/`story-service` dùng đúng pattern đơn giản hơn (không có bảng phụ thuộc, giống hệt
 post-service) nên không lặp lại live-verify — đã được cover đầy đủ qua unit test.
 
-## Việc cần làm tiếp theo (theo thứ tự ưu tiên đề xuất)
+## ✅ Metrics/dashboard (Prometheus + Grafana)
 
-1. **Metrics/dashboard** — đã có tracing+log, còn thiếu Prometheus (metrics) + dashboard Grafana trực quan (request rate, latency p99, error rate theo service) — cố ý bỏ qua đợt trước để không thêm quá nhiều container cùng lúc.
-2. **Nâng cấp nhỏ theo từng service** — xem cột "Còn thiếu" ở bảng trên.
-3. **(tuỳ chọn) Gộp Swagger UI qua gateway** thành 1 điểm truy cập chung thay vì phải nhớ port từng service.
-4. **(tuỳ chọn) Hạ `sampling.probability` xuống thấp hơn 1.0** trước khi coi là "production-ready" — 100% sampling chỉ hợp lý cho demo/dev.
+Hoàn thiện mảnh cuối của observability (đã có tracing qua Zipkin + log tập trung qua Loki từ trước):
+
+- **`micrometer-registry-prometheus`** thêm vào `common-lib` (1 chỗ, tự động có ở mọi service phụ
+  thuộc common-lib thay vì sửa tay 15 pom riêng lẻ) + thêm trực tiếp vào `eureka-server`/`config-server`
+  (2 service không phụ thuộc common-lib). Bật `/actuator/prometheus` (`exposure.include`) và
+  `management.metrics.distribution.percentiles-histogram.http.server.requests: true` (cần cho
+  `histogram_quantile` tính p99 — thiếu dòng này thì Prometheus không có bucket data) ở cả 18 file
+  `application.yml`.
+- **Prometheus tự phát hiện service qua Eureka** (`eureka_sd_configs`) thay vì liệt kê tay từng
+  service/port trong `prometheus.yml` — cố ý tránh lặp lại đúng lỗi vừa gặp ở CI (`moderation-service`
+  bị quên trong danh sách cứng `SERVICES` của `ci-cd.yml`, xem mục CI/CD ở trên). Riêng `eureka-server`
+  tự nó không đăng ký làm Eureka client (`register-with-eureka: false` vì nó chính là registry) nên
+  không thể được Eureka SD phát hiện — phải scrape tĩnh riêng 1 job cho nó.
+- **Dashboard Grafana "Service Overview" provision sẵn** (file JSON + provider config mount qua
+  Docker volume, không cần tự tạo tay lúc demo): 6 panel — services up (stat), request rate theo
+  service, p99 latency theo service, error rate 5xx % theo service, JVM heap dùng theo service, CPU
+  usage theo service.
+
+**Đã verify bằng dữ liệu Prometheus/Grafana thật** (không chỉ container "Up"), sau khi redeploy full
+18 service + container `prometheus` mới:
+1. `GET /api/v1/targets` → **18/18 target `health: up`** (17 service qua `eureka-discovered-services`
+   job tự phát hiện + 1 `eureka-server` scrape tĩnh) — đúng số lượng service hiện có.
+2. `GET /actuator/prometheus` trên `post-service` → có `http_server_requests_seconds_bucket` (69
+   dòng, đủ bucket cho `histogram_quantile`) và `jvm_memory_used_bytes` (10 dòng).
+3. Tạo traffic thật qua gateway (đăng ký user, 20 lần tạo post + đọc, vài request 404) rồi query trực
+   tiếp đúng 4 công thức dashboard dùng: **request rate theo service có số liệu thật** (`POST-SERVICE`
+   0.65 req/s, `API-GATEWAY` 0.6 req/s — cao nhất, đúng nơi traffic đổ vào), **p99 latency theo service
+   có số liệu thật** cho toàn bộ 16/16 service có traffic, **error rate 5xx trả tập rỗng đúng** (chưa
+   có lỗi 5xx nào xảy ra — không phải bug), **services-up count = 18** khớp số target.
+4. `GET /api/search` trên Grafana → dashboard `service-overview` đã tự provision, không cần tạo tay.
+   `GET /api/datasources` → datasource Prometheus (`uid: prometheus`) đã đăng ký đúng, khớp UID dashboard JSON tham chiếu.
+5. `GET /api/dashboards/uid/service-overview` → cả 6 panel load đúng title, không panel nào lỗi do sai UID/query.
+
+Build+test toàn reactor trước khi redeploy: **18/18 module pass** (334 unit test, không đổi vì đây
+chỉ là thay đổi cấu hình/dependency, không sửa logic nghiệp vụ).
+
+Truy cập: Prometheus UI `http://localhost:9090` (Status → Targets để xem trạng thái scrape); dashboard
+Grafana mở sẵn tại `http://localhost:3000/d/service-overview` (anonymous admin, không cần đăng nhập).
+
+## ✅ Nâng cấp nhỏ theo từng service
+
+8 mục nhỏ, mỗi mục có test riêng (đơn vị + verify thật qua Docker), chọn có chủ đích những thứ thực
+sự "nhỏ" — bỏ qua các mục lớn hơn trong danh sách gốc (OAuth2, resize/transcode video, FCM push...):
+
+1. **`api-gateway`**: thêm `RequestRateLimiter` cho 2 route WebSocket `/ws/**` và `/ws-notifications/**`
+   (trước đó là 2 route duy nhất chưa có rate-limit trong khi mọi route REST khác đều có).
+2. **`user-service`**: `GET /api/users/search?q=` tìm theo `fullName` (substring, không phân biệt hoa
+   thường, phân trang) — email không tìm được vì user-service không lưu email (auth-service giữ).
+3. **`media-service`**: whitelist content-type (chỉ ảnh jpeg/png/gif/webp + video mp4/webm/quicktime,
+   trước đó không chặn gì ngoài dung lượng) và giới hạn riêng 10MB cho ảnh ở các purpose luôn-là-ảnh
+   (AVATAR/COVER/PAGE/GROUP) — purpose có thể là video (POST/STORY/REEL/CHAT) vẫn dùng giới hạn 50MB
+   sẵn có ở tầng servlet.
+4. **`post-service`**: ghim bài (`pinned` field + `PUT`/`DELETE /api/posts/{id}/pin`, chỉ author) —
+   `GET /api/posts/author/{id}` giờ sắp bài ghim lên đầu trước khi sắp theo thời gian.
+5. **`reels-service`**: áp dụng đúng công thức ranking Hacker-News-style của `feed-service`
+   (bounded pool → score → sort → paginate in memory) cho `getFeed` — trước đó thuần theo thời gian.
+6. **`dating-service`**: `DELETE /api/dating/matches/{id}` (unmatch) — chỉ 1 trong 2 người của match.
+7. **`group-service`**: thêm role `MODERATOR` (giữa `ADMIN`/`MEMBER`) — được duyệt thành viên chờ
+   nhưng **không** được xoá thành viên hay đổi role người khác (vẫn ADMIN-only). Thêm
+   `PUT /api/groups/{id}/members/{userId}/role` (ADMIN-only, chặn hạ role ADMIN cuối cùng — cùng
+   pattern "last owner guard" đã có ở `fanpage-service`).
+8. **`chat-service`**: `DELETE /api/chat/messages/{id}` — chỉ sender, soft-delete + xoá sạch
+   `content`/`mediaUrl` (thu hồi thật, không chỉ ẩn) — trả về document đã xoá với `deleted: true`.
+
+Build+test toàn reactor: **18/18 module pass, 364 unit test** (tăng từ 334 — 30 test mới/cập nhật
+qua 7 service). Test đáng chú ý: `ReelServiceTest` copy nguyên bộ test ranking của `FeedQueryServiceTest`
+(cùng age → engagement cao thắng, cùng engagement 0 → mới nhất thắng, engagement khủng thắng cả bài
+mới hơn nhiều, phân trang cắt đúng theo thứ tự đã rank chứ không theo thứ tự query gốc).
+
+**Đã verify bằng luồng thật qua Docker + curl, phát hiện và sửa 2 bug schema-migration thật** (giống
+đúng kiểu lỗi "chỉ lộ ra khi chạy Docker thật với DB đã có dữ liệu" đã ghi nhận nhiều lần trước đây):
+- **Bug 1 — `post-service`**: `ALTER TABLE posts ADD COLUMN pinned boolean NOT NULL` fail với
+  `column "pinned" of relation "posts" contains null values` — `@Builder.Default` chỉ set default ở
+  phía Java, không sinh ra `DEFAULT` ở DDL, nên Postgres không biết backfill giá trị nào cho các dòng
+  đã tồn tại. Sửa: thêm `@Column(columnDefinition = "boolean default false")` vào field `pinned`.
+- **Bug 2 — `group-service`**: promote thành viên lên `MODERATOR` fail với
+  `violates check constraint "group_members_role_check"` — Hibernate 6 tự sinh CHECK constraint cho
+  cột `@Enumerated(STRING)` **tại thời điểm tạo bảng lần đầu** (chỉ biết `ADMIN`/`MEMBER` lúc đó);
+  `ddl-auto: update` không tự sửa lại CHECK constraint khi enum Java có thêm giá trị mới. Đây là giới
+  hạn đã biết của Hibernate `update` mode (không migrate constraint), không phải lỗi code — đã
+  `ALTER TABLE ... DROP/ADD CONSTRAINT` thủ công trên DB dev đang chạy để unblock; một deploy từ volume
+  sạch (`docker compose down -v`) sẽ tự sinh đúng CHECK constraint với cả 3 giá trị ngay từ đầu.
+
+Sau khi sửa cả 2, verify lại toàn bộ và pass thật với dữ liệu Docker + curl:
+1. Search "Zephyr" trả đúng user vừa đăng ký; query rỗng → 400.
+2. Upload `.exe` giả (content-type `application/x-msdownload`) → 400; upload PNG hợp lệ → 200; upload
+   ảnh 11MB cho purpose `avatar` → 400 "AVATAR image must be 10MB or smaller".
+3. Tạo bài cũ rồi bài mới, ghim bài cũ → `GET /api/posts/author/{id}` trả bài cũ (đã ghim) lên đầu.
+4. `reels-service`'s `/api/reels/feed` chạy sạch qua code ranking mới (không lỗi runtime), rỗng vì
+   chưa có reel nào — logic ranking đã cover đầy đủ bằng unit test riêng.
+5. Group role: chủ group promote thành viên lên MODERATOR → 200; MODERATOR đó duyệt được thành viên
+   chờ khác → 200; MODERATOR đó gọi xoá thành viên → **403** (đúng, ADMIN-only).
+6. 2 user tạo hồ sơ dating tương thích, swipe LIKE lẫn nhau → match được tạo; `DELETE
+   /api/dating/matches/{id}` → 200, `GET /api/dating/matches` sau đó rỗng.
+7. Seed 1 message thẳng vào MongoDB, người không phải sender gọi xoá → 403; sender gọi xoá → 200,
+   `content`/`mediaUrl` đều `null`, `deleted: true` — xác nhận bằng cách đọc lại thẳng từ MongoDB.
+8. `api-gateway`: route `/ws/**`/`/ws-notifications/**` vẫn hoạt động bình thường sau khi thêm
+   rate-limit filter (không kiểm thử riêng việc chạm ngưỡng rate-limit).
+
+## ✅ Gộp Swagger UI qua gateway
+
+Trước đây mỗi service có Swagger UI riêng trên port của nó — phải nhớ 15 port khác nhau. Giờ có
+**1 điểm truy cập chung** tại `http://localhost:8080/swagger-ui.html`, dùng đúng tính năng aggregation
+có sẵn của springdoc (`springdoc.swagger-ui.urls`), không cần viết code custom:
+
+- **`api-gateway`** thêm `springdoc-openapi-starter-webflux-ui` (bản reactive — api-gateway chạy
+  Spring Cloud Gateway/WebFlux, không phải MVC nên không dùng chung artifact `-webmvc-ui` mà 15
+  service kia đang dùng).
+- **15 route mới** dạng `/docs/{service}/v3/api-docs` → `lb://{SERVICE}` + `RewritePath` về `/v3/api-docs`
+  thật của từng service — gateway đóng vai trò proxy thuần, không tự sinh OpenAPI doc nào.
+- **`springdoc.swagger-ui.urls`** liệt kê cả 15 route trên → UI hiện dropdown chọn service (giống hệt
+  cách nhiều dự án dùng Spring Cloud Gateway + springdoc để aggregate docs — không phải pattern tự nghĩ).
+- **`JwtAuthenticationFilter`**: thêm `/swagger-ui.html`, `/swagger-ui/**`, `/webjars/**`,
+  `/v3/api-docs/**`, `/docs/**` vào danh sách public — nếu không, mở Swagger UI sẽ bị chặn đòi JWT.
+
+**Lưu ý đã biết** (ghi lại để không quên khi thêm service mới, tránh lặp lại đúng kiểu lỗi
+"danh sách bị quên" đã gặp ở CI/Prometheus trước đây — khác là ở đây Prometheus tự phát hiện qua Eureka
+được, còn route proxy docs thì không thể tự động hoá tương tự vì springdoc's `swagger-ui.urls` cần
+biết trước danh sách tên hiển thị, nên đây là 1 trong số ít chỗ còn phải cập nhật tay khi thêm service):
+thêm service mới phải nhớ thêm cả route `/docs/{service}/v3/api-docs` lẫn 1 dòng trong
+`springdoc.swagger-ui.urls`.
+
+**Đã verify bằng dữ liệu thật qua Docker + curl**:
+1. `GET /swagger-ui.html` → redirect 302 → theo redirect ra đúng trang HTML Swagger UI (200).
+2. `GET /docs/post-service/v3/api-docs`, `/docs/dating-service/...`, `/docs/group-service/...`,
+   `/docs/auth-service/...`, `/docs/moderation-service/...` — cả 5 đều trả đúng OpenAPI JSON thật
+   được proxy từ service tương ứng (không phải 401/404); `group-service`'s doc còn thấy đúng cả
+   endpoint `PUT /api/groups/{id}/members/{userId}/role` mới thêm ở đợt "nâng cấp nhỏ" trước đó.
+3. `GET /v3/api-docs/swagger-config` → JSON liệt kê đúng đủ 15 service cho dropdown.
+4. **Regression check**: `GET /api/posts/1` không kèm token → vẫn **401** như trước — xác nhận danh
+   sách public-path mới không vô tình mở toang route API thật nào.
+
+Sự cố ngoài lề lúc verify: Docker Desktop bị treo engine (`docker ps` timeout hoàn toàn, không phải
+lỗi code) — người dùng tự khởi động lại Docker Desktop; sau khi lên lại, `comment-service` bị kill
+(exit 137, đúng lúc Docker Desktop restart) nên tạm thời rớt khỏi Eureka — `docker start` lại là xong,
+không phải bug liên quan đến thay đổi lần này.
+
+Build+test toàn reactor trước khi redeploy: **18/18 module pass** (không đổi số test vì đây chỉ là
+thay đổi cấu hình/routing, không sửa logic nghiệp vụ).
+
+## ✅ Cho phép hạ tracing sampling probability qua env var (production-readiness)
+
+Trước đó `management.tracing.sampling.probability: 1.0` bị hardcode ở cả 16 service (15 business +
+`api-gateway`) — hợp lý cho demo (thấy mọi trace) nhưng không nên dùng nguyên vậy cho production
+(overhead + Zipkin phình to). Đổi thành `probability: ${TRACING_SAMPLING_PROBABILITY:1.0}` ở cả 16
+file — mặc định vẫn 100% (không đổi hành vi demo/dev hiện tại), nhưng giờ production deploy có thể hạ
+xuống chỉ bằng 1 biến môi trường, không cần rebuild image hay đổi code.
+
+**Đã verify bằng dữ liệu Zipkin thật — không chỉ "container khởi động được"**, và phát hiện 1 điều quan
+trọng về cách sampling hoạt động trong tracing phân tán (không phải bug, là hành vi đúng cần hiểu rõ):
+
+1. Baseline: gọi `post-service` qua gateway (mặc định 1.0) → trace xuất hiện đúng trong Zipkin.
+2. **Test đầu tiên qua gateway bị nhiễu**: tạm set `TRACING_SAMPLING_PROBABILITY=0.0` riêng cho
+   `post-service`, gọi 10 request **qua gateway** → vẫn thấy span mới (724→754)! Không phải bug —
+   đây là **head-based sampling**: quyết định "có sample hay không" được chốt ở nơi trace *bắt đầu*
+   (ở đây là `api-gateway`, vẫn 1.0) rồi truyền xuống qua trace context; service phía sau chỉ *kế thừa*
+   quyết định đó chứ không tự quyết lại — đúng theo cách Brave/Micrometer Tracing hoạt động, và đúng ra
+   phải vậy (nếu mỗi service tự quyết riêng thì 1 trace có thể bị đứt quãng, thiếu span giữa chừng).
+3. **Test đúng cách**: gọi thẳng `post-service` ở port 8084 (bỏ qua gateway → post-service tự là gốc
+   trace) với `probability=0.0` → gọi 10 request, **0 span mới** (754→754) — xác nhận biến môi trường
+   thật sự có tác dụng khi service là nơi khởi tạo trace.
+4. Gỡ override, redeploy lại `post-service` với mặc định → gọi trực tiếp lại → **5 request → 5 span
+   mới** (759→764) — tracing hoạt động lại bình thường, xác nhận revert sạch, không để lại cấu hình
+   tạm trong `docker-compose.yml` (`git diff` sạch sau khi xong).
+
+Build+test toàn reactor trước khi redeploy: **18/18 module pass** (chỉ đổi giá trị cấu hình, không sửa
+logic nghiệp vụ nên số test không đổi).
+
+Cách dùng khi deploy production: set `TRACING_SAMPLING_PROBABILITY=0.1` (hoặc giá trị mong muốn) trong
+`x-app-env` của `docker-compose.yml`, hoặc riêng từng service nếu muốn mức sampling khác nhau —
+không cần rebuild image.
+
+## ✅ Share/repost, tag người dùng, custom audience privacy, tìm kiếm tổng hợp
+
+4 tính năng "phải có" trước khi bắt tay Frontend Web (theo audit so sánh với Facebook thật — xem đoạn
+audit trước đó trong lịch sử làm việc; Events cố ý bỏ qua theo yêu cầu):
+
+1. **Share/repost** (`post-service`): `POST /api/posts/{id}/share` — tạo 1 `Post` mới với
+   `sharedPostId` trỏ về bài gốc + `content` là lời bình khi chia sẻ (như hộp thoại share của
+   Facebook). Bài gốc tăng `shareCount`. Không cho chia sẻ bài mình không có quyền xem (dùng lại đúng
+   logic `canView` bên dưới).
+2. **Tag người dùng vào bài viết** (`post-service` + `notification-service`): `Post` có thêm
+   `taggedUserIds`. Tạo bài mới → publish 1 event `PostTaggedEvent` (topic `post-tagged-events`) cho
+   mỗi người được tag. Sửa bài → chỉ publish event cho người **mới** được tag thêm (diff với danh sách
+   cũ), tránh spam thông báo lại cho người đã tag từ trước. `notification-service` thêm
+   `NotificationType.TAG` + listener mới.
+3. **Custom audience privacy** (`post-service`): enum `Privacy` thêm giá trị `CUSTOM` (đã có sẵn
+   `FRIENDS` từ trước, chỉ thiếu `CUSTOM`). `Post` thêm `customAudienceUserIds` — danh sách user được
+   xem khi `privacy=CUSTOM`. **Đây là lần đầu tiên post-service thực sự enforce privacy lúc đọc** —
+   trước đó `privacy` chỉ là field trang trí, `getPost`/`getPostsByAuthor`/... không hề kiểm tra gì.
+   Thêm `canView(post, viewerId)`: PUBLIC luôn thấy, PRIVATE chỉ tác giả, FRIENDS gọi Feign sang
+   `user-service` lấy `friend-ids` để kiểm tra, CUSTOM kiểm tra trong danh sách allow-list. Áp dụng ở
+   `getPostsByAuthor`/`getPostsByGroup`/`getPostsByPage` (lọc kết quả sau khi query) — **cố ý không**
+   áp dụng ở `GET /api/posts/{id}` và `/batch` vì 2 endpoint này còn được gọi nội bộ qua Feign bởi
+   comment-service/feed-service (không mang theo viewer identity vì Feign không tự động forward
+   header `X-User-Id` — chưa có `RequestInterceptor` cho việc này), enforce ở đó sẽ chặn nhầm mọi
+   Feign call. Đây là giới hạn đã biết, ghi rõ trong code.
+4. **Tìm kiếm tổng hợp** (`search-service`, service thứ 19, port 8096): service mới **không có DB
+   riêng**, chỉ tổng hợp qua 4 Feign client (user/group/fanpage/post-service) — mỗi client có
+   circuit breaker + fallback riêng (degrade về rỗng nếu 1 service down, không sập cả search).
+   `post-service` phải thêm mới `GET /api/posts/search` (trước đó chưa có tìm nội dung bài viết, cố ý
+   giới hạn chỉ tìm bài PUBLIC — an toàn cho mọi caller kể cả Feign không có viewer identity).
+   `GET /api/search?q=&limit=` trả về gộp cả 4 loại kết quả.
+
+**Đã verify bằng dữ liệu thật qua Docker + curl**, và trong quá trình verify gặp liên tiếp nhiều sự
+cố hạ tầng thật (không phải lỗi logic nghiệp vụ) — ghi lại đầy đủ vì đây là bài học đáng giá:
+
+- **Sự cố Docker Desktop**: engine bị treo hoàn toàn giữa chừng (không phải do session này gây ra) —
+  `docker ps` timeout ở mọi shell (Git Bash lẫn PowerShell), trong khi GUI vẫn hiển thị "Engine
+  running" (dữ liệu cache). Chẩn đoán qua `wsl --list --verbose`: distro `docker-desktop-data` (chứa
+  toàn bộ volume) biến mất khỏi danh sách dù `docker-desktop` (engine) vẫn "Running". File dữ liệu
+  thật (`docker_data.vhdx`, ~40GB) vẫn còn nguyên trên đĩa — **không mất dữ liệu**, chỉ là WSL distro
+  chưa đăng ký lại. Khắc phục: người dùng Quit hẳn Docker Desktop từ system tray (không chỉ đóng cửa
+  sổ) rồi mở lại — engine tự đăng ký lại đúng, mọi container/volume/image phục hồi nguyên vẹn.
+- **Bug thật — stale Docker image sau sự cố**: sau khi Docker phục hồi, `post-service` và
+  `notification-service` chạy nhầm **image cũ** (thiếu hẳn code mới — API response thiếu
+  `taggedUserIds`/`shareCount`/..., `notification-service` thiếu consumer cho topic
+  `post-tagged-events`) dù `docker compose up -d --build` trước đó báo thành công. Xác nhận bằng cách
+  trích bytecode `Post.class` từ trong container so với JAR thật trên host (host có đủ field, container
+  thì không) — kết luận: build bị gián đoạn giữa chừng bởi sự cố Docker, một số service build xong
+  trước khi crash, một số thì không, nhưng lệnh `docker compose up -d --build` vẫn trả về exit 0. Sửa:
+  `docker compose build` (không cache) lại toàn bộ + `docker compose up -d` — Docker chỉ recreate
+  đúng những container có image thay đổi thật (post-service không bị recreate lại vì đã tự sửa trước
+  đó bằng `--no-cache` riêng).
+- **Bug thật — CHECK constraint cũ trên cột `privacy`**: y hệt lỗi đã gặp với `MemberRole` của
+  group-service — Hibernate tự sinh CHECK constraint lúc tạo bảng lần đầu (chỉ biết
+  PUBLIC/FRIENDS/PRIVATE), `ddl-auto: update` không tự sửa lại khi enum có thêm `CUSTOM`. Tạo post
+  CUSTOM lần đầu fail với `violates check constraint "posts_privacy_check"`. Sửa thủ công trên DB dev
+  (`DROP`/`ADD CONSTRAINT` với đủ 4 giá trị) — một volume sạch sẽ tự sinh đúng ngay từ đầu.
+- **Sự cố phụ — Postgres hết connection**: `too many clients already` khi cố mở 1 kết nối `psql` thủ
+  công, do ~13 service Postgres-backed × HikariCP pool mặc định 10 connection cộng dồn gần chạm
+  `max_connections` mặc định 100 của Postgres — càng dễ xảy ra sau 1 đợt restart hàng loạt (mọi pool
+  cùng reconnect). Sửa tạm bằng cách restart container `postgres` (giải phóng hết connection, dữ liệu
+  an toàn trong volume). **Chưa sửa tận gốc** — nên hạ `spring.datasource.hikari.maximum-pool-size`
+  ở từng service hoặc tăng `max_connections` nếu tiếp tục mở rộng số service dùng Postgres.
+
+Sau khi sửa hết, verify lại toàn bộ và pass thật:
+1. A tạo bài tag B → response có đúng `taggedUserIds`; B có thông báo `type: TAG` với đúng `targetId`.
+2. A tạo bài, B share kèm lời bình → bài share có `sharedPostId` trỏ đúng bài gốc; `GET` lại bài gốc
+   thấy `shareCount: 1`.
+3. A tạo bài `privacy: CUSTOM, customAudienceUserIds: [B]` → B xem `GET /api/posts/author/A` thấy bài
+   này, C (không có trong audience) xem cùng endpoint **không** thấy.
+4. `GET /api/search?q=Feature` → trả đúng cả 3 user có tên chứa "Feature"; `?q=share` → trả đúng bài
+   viết có nội dung chứa "share" — xác nhận search-service thật sự tổng hợp từ các service thật, không
+   phải rơi vào fallback rỗng.
+
+Build+test toàn reactor trước khi redeploy: **19/19 module pass, 389 unit test** (tăng từ 364).
+
+## Việc cần làm tiếp theo
+
+Backlog đề xuất trước đó đã xong hết. Từ audit so sánh với Facebook thật, còn các mục **cố ý chưa làm**
+(không nằm trong yêu cầu lần này): Events, Save/Bookmark bài viết, activity log/2FA, và các mục nhỏ
+theo từng service đã ghi ở cột "Còn thiếu" trong bảng trạng thái phía trên. Việc tiếp theo nên xuất
+phát từ yêu cầu mới của người dùng.
 
 ## ✅ Đã test WebSocket thật (chat + notification)
 
 Xem "Lỗi thứ 8" ở trên — cả 2 luồng real-time đã verify PASS qua gateway thật với JWT thật, không phải qua mock.
+
+## ✅ Giai đoạn 2a — Flutter Web Frontend (nền tảng + trải nghiệm Facebook cốt lõi)
+
+Bắt đầu giai đoạn 2 (giao diện) theo yêu cầu: Flutter, bố cục dọc kiểu Facebook (để đồng bộ mobile sau
+này), gắn thẳng vào backend thật (không mock). Thư mục mới: `frontend/` (ngang hàng `services/`).
+
+**Đã triển khai (Phase 2a):**
+- **Kiến trúc**: `flutter_riverpod` (state), `go_router` (URL routing + auth guard qua `redirect`),
+  `dio` (HTTP client, có interceptor tự gắn `Authorization` header + tự refresh token khi gặp 401 rồi
+  retry 1 lần), `flutter_secure_storage` (lưu token). Model viết tay (`fromJson`/`toJson` thủ công,
+  không dùng `freezed`/`json_serializable`/`build_runner`) — quyết định vì máy dev không có Flutter SDK
+  cài sẵn nên không thể debug lỗi codegen tương tác được.
+- **Layout**: `AppShell` dùng chung — top bar (logo, tìm kiếm tổng hợp qua `search-service`, chuông lời
+  mời kết bạn, menu tài khoản), sidebar trái (điều hướng, các mục Group/Fanpage/Story/Reels/Dating/
+  Chat/Notification hiện "Sắp có" — giữ đúng bố cục Facebook thật dù chưa làm), cột giữa 1 cột dọc cho
+  nội dung (feed/profile/post detail), sidebar phải để placeholder. Responsive: ẩn 2 sidebar khi màn
+  hẹp (<900px).
+- **Chức năng đầy đủ theo scope đã chốt**: đăng ký/đăng nhập/đăng xuất, feed cá nhân (`GET
+  /api/feed/me`, infinite scroll), tạo/sửa/xoá/ghim bài viết, upload media qua `media-service`, chọn
+  quyền riêng tư PUBLIC/FRIENDS/CUSTOM/PRIVATE (CUSTOM mở picker chọn bạn cụ thể), gắn thẻ bạn bè, share/
+  repost (kèm lời bình + đổi privacy), comment có reply, reaction 6 loại (like/love/haha/wow/sad/angry)
+  cho cả post và comment, xem/sửa profile + đổi avatar/cover, gửi/chấp nhận/từ chối lời mời kết bạn, huỷ
+  kết bạn, chặn/bỏ chặn, danh sách bạn bè, tìm kiếm tổng hợp ở top bar (user + post, group/page tạm ẩn
+  vì chưa có UI tương ứng).
+- **Đóng gói**: `frontend/Dockerfile` (multi-stage `cirruslabs/flutter:stable` build → `nginx:alpine`
+  serve, có `try_files` fallback cho SPA routing), thêm service `frontend` (port 3001) vào
+  `docker-compose.yml`.
+
+**Verify qua Docker thật** (máy dev không có Flutter SDK cài sẵn nên đây là cách verify chính, không
+chỉ đọc code):
+- `docker compose build frontend` ban đầu fail 2 lỗi biên dịch Dart thật (không phải lỗi hạ tầng):
+  1. Truyền thẳng tear-off `X.fromJson` (kiểu `T Function(Map<String, dynamic>)`) vào tham số kiểu `T
+     Function(dynamic)` của `ApiResponse.fromJson`/`PageResponse.fromJson` — dart2js từ chối vì kiểu
+     tham số không khớp tĩnh (dù có vẻ hợp lệ khi đọc code). Sửa bằng cách bọc qua hàm top-level tường
+     minh kiểu `dynamic` (ví dụ `Post _postFromJson(dynamic json) => Post.fromJson(json as
+     Map<String, dynamic>)`), áp dụng cho toàn bộ 6 repository (`post`, `comment`, `reaction`,
+     `profile`, `auth`, và các chỗ dùng `PageResponse` lồng bên trong).
+  2. 2 chỗ thiếu import khiến provider không resolve được (`profileRepositoryProvider` định nghĩa nhầm
+     ở `user_lookup_provider.dart` thay vì `profile_repository.dart`; `profile_page.dart` import nhầm
+     `post_repository.dart` thay vì `post_provider.dart` nơi `postRepositoryProvider` thực sự khai
+     báo) — dọn lại co-location provider/repository cho đúng.
+- Sau khi sửa: `flutter build web --release` thành công, container `sma-frontend` chạy, `http://
+  localhost:3001` trả về đúng trang (title "Social", `flutter_bootstrap.js`/`main.dart.js` load 200).
+- Test cuốn chiếu qua `curl` thẳng vào `api-gateway` thật với đúng chuỗi request mà Flutter app gọi:
+  register → `/api/auth/me` → `/api/users/me` → tạo bài (đủ field `customAudienceUserIds`/
+  `taggedUserIds`/`sharedPostId`/`shareCount`) → feed (xác nhận đúng shape `PostDto` rút gọn của
+  feed-service, thiếu `customAudienceUserIds`/`updatedAt` — model Dart xử lý đúng bằng default) →
+  comment → reaction summary → share. Toàn bộ field JSON khớp chính xác với model Dart đã viết.
+- Gặp lại đúng lỗi hạ tầng Docker Desktop đã biết từ trước (`docker-desktop-data` rớt khỏi WSL, 500 "API
+  version") giữa lúc build — user Quit hẳn từ tray + mở lại, sau đó `feed-service` cần build lại jar
+  Maven thủ công (`mvn package -DskipTests`) vì lần chạy `mvn ... test` trước đó không đóng gói jar.
+
+**Chưa làm ở lượt này** (đã ghi rõ trong sidebar "Sắp có", chưa cần hỏi lại): Group, Fanpage, Story,
+Reels, Dating, Chat real-time UI, Notification real-time UI (mới có nút chuông cho lời mời kết bạn qua
+REST polling thủ công, chưa nối WebSocket), trang kết quả tìm kiếm riêng, trang quản trị Moderation.
+
+**Giới hạn đã biết của lượt verify này**: chưa test bằng trình duyệt thật (môi trường này không có công
+cụ điều khiển browser) — mới verify được (1) build production thành công, (2) trang tĩnh serve đúng,
+(3) toàn bộ contract API khớp field-by-field với backend thật qua curl. Chưa tận mắt xác nhận
+tương tác UI (click, dialog, responsive layout) hoạt động đúng trên trình duyệt.
+
+## ✅ Giai đoạn 2b — Flutter Web Frontend: Group, Fanpage, Story, Reels, Dating, Chat, Notification, Moderation, Search
+
+Hoàn thành toàn bộ phần backlog còn lại của giao diện (liệt kê "chưa làm" ở mục Phase 2a phía trên).
+Giờ giao diện phủ đủ chức năng của tất cả 16 business service.
+
+**Đã triển khai:**
+- **Group**: danh sách nhóm (`/groups`), trang chi tiết nhóm (`/groups/:id`) — tham gia/rời/duyệt thành
+  viên/đổi vai trò/kick, đăng bài trong nhóm (tái dùng `PostComposerDialog` với `groupId`).
+- **Fanpage**: danh sách trang (`/pages`), chi tiết trang (`/pages/:id`) — follow/unfollow, thêm/xoá
+  admin theo vai trò OWNER/ADMIN/EDITOR, đăng bài trong trang.
+- **Story**: dải story 24h ở đầu feed (`stories_strip.dart`), dialog tạo story, story viewer full-screen.
+- **Reels**: feed reels dạng cuộn dọc xếp hạng theo engagement (`/reels`), player video, tạo reel mới.
+- **Dating**: thiết lập hồ sơ hẹn hò, màn hình vuốt (swipe like/pass) hiển thị điểm tương thích, danh
+  sách match.
+- **Chat real-time**: danh sách hội thoại (`/chat`), màn hình chat (`/chat/:id`) — kết nối STOMP qua
+  WebSocket thật (`/ws`, gói `stomp_dart_client`, xác thực bằng `?token=` trên URL kết nối vì browser
+  WebSocket không tự gắn header `Authorization` được), gửi qua `/app/chat.send`, nhận qua
+  `/user/queue/messages` (echo cả tin nhắn của chính mình, đúng theo thiết kế backend).
+- **Notification real-time**: chuông thông báo ở top bar kết nối STOMP tới `/ws-notifications`, nhận
+  qua `/user/queue/notifications`, cộng dồn `unreadCount` ngay khi có sự kiện mới (không cần polling);
+  trang danh sách đầy đủ (`/notifications`) + đánh dấu đã đọc từng cái/tất cả.
+- **Moderation**: nút báo cáo nội dung (dialog chọn loại đối tượng + lý do), trang quản trị
+  (`/admin/reports`, chỉ hiện trong sidebar và cho phép truy cập khi tài khoản có role `ADMIN` — gate
+  cả ở `app_router.dart` lẫn ẩn nav item) để duyệt hàng đợi báo cáo, dismiss hoặc remove-content.
+- **Search page**: trang kết quả tìm kiếm đầy đủ (`/search?q=`) hiển thị cả 4 loại (user/group/page/
+  post), khác với dropdown ở top bar chỉ hiện gợi ý nhanh.
+- `AppShell` sidebar: toàn bộ mục trước đây "Sắp có" nay trỏ route thật; mục Moderation chỉ hiện với
+  admin.
+
+**Verify qua Docker thật**: `docker compose build frontend` lần đầu ra đúng 3 lỗi biên dịch Dart thật
+(1 chỗ thiếu `import '../../core/models/enums.dart';` ở `dating_provider.dart` khiến `SwipeAction`
+không resolve được dù type này được re-export gián tiếp qua `dating.dart`; 2 chỗ tương tự ở
+`notifications_page.dart`/`notification_bell_button.dart` khiến extension getter `.icon` trên
+`NotificationType` không nằm trong scope) — sửa xong build sạch. Sau đó test cuốn chiếu qua curl thẳng
+vào `api-gateway` thật: tạo group, tạo fanpage, tạo story, tạo reel, tạo/lưu hồ sơ dating, list chat
+conversations, notifications unread-count, tạo moderation report, tìm kiếm tổng hợp (trả về đúng cả
+group mới tạo) — toàn bộ field JSON khớp chính xác với model Dart.
+
+**Sự cố hạ tầng gặp phải khi build lượt này** (không phải lỗi code, ghi lại để lần sau khỏi mất thời
+gian chẩn đoán lại):
+- Docker Desktop crash lặp lại nhiều lần trong đêm (500 "API version", `docker-desktop-data` rớt khỏi
+  WSL) — cùng loại lỗi đã ghi nhận trước đó, khắc phục bằng Quit hẳn từ tray + mở lại nhiều lần.
+- Người dùng thử chuyển vị trí lưu dữ liệu Docker (disk image location) từ ổ C sang ổ D qua Settings —
+  **phát hiện bug thật của Docker Desktop**: robocopy copy dữ liệu (~46GB) sang D thành công (verify
+  bằng cách so kích thước file 2 bên khớp tuyệt đối), nhưng Docker Desktop hiểu sai exit code 1 của
+  robocopy (nghĩa là "copy thành công" theo tài liệu Microsoft) thành lỗi, nên huỷ áp dụng setting —
+  lặp lại y hệt ở lần thử lại. Không có file cấu hình host-side để tự sửa tay (giá trị này lưu trong
+  filesystem ext4 của VM WSL, không phải JSON trên Windows) nên đành bỏ qua, xoá bản D thừa, giữ dữ
+  liệu ở C (còn 33GB trống, đủ dùng).
+  - Thử `wsl --import-in-place` để đăng ký lại `docker-desktop-data` — thất bại với
+    `WSL_E_NOT_A_LINUX_DISTRO`, vì bản Docker Desktop này không dùng distro dữ liệu riêng nữa (chỉ có
+    1 distro `docker-desktop`, vhdx được mount như đĩa phụ) — việc `docker-desktop-data` không xuất
+    hiện trong `wsl --list` là **bình thường** ở bản này, không phải dấu hiệu hỏng như đã tưởng nhầm
+    trước đó trong phiên.
+- **Nguyên nhân sâu xa của hàng loạt lần build frontend bị crash giữa chừng** (`rpc error: code =
+  Unavailable`, `http2: ... file has already been closed`, cả ở BuildKit lẫn legacy builder — loại trừ
+  được nguyên nhân do BuildKit): RAM cấp cho WSL2 không đủ khi vừa chạy 24+ container backend vừa chạy
+  `dart2js` (rất tốn RAM lúc biên dịch bản `--release`). Máy host chỉ 16GB RAM, WSL2 dùng mặc định
+  (không có `.wslconfig`) nên bị giới hạn thấp. Khắc phục: tạo `%USERPROFILE%\.wslconfig` với
+  `memory=12GB` + `wsl --shutdown` + mở lại Docker Desktop, đồng thời tạm tắt observability stack
+  (Grafana/Prometheus/Loki/Promtail/Zipkin — không cần thiết lúc build) để tăng vùng đệm. Sau đó build
+  chạy trọn vẹn dù chậm hơn (267s thay vì ~90s bình thường, do RAM vẫn eo hẹp chứ không thiếu hẳn nữa).
+
+**Giới hạn đã biết**: vẫn chưa test bằng trình duyệt thật (không có công cụ điều khiển browser trong
+môi trường này) — WebSocket chat/notification đã verify đúng theo tài liệu contract backend (đọc kỹ
+source `ChatStompController`/`WebSocketConfig` của cả 2 service) nhưng **chưa test round-trip thật qua
+STOMP** (chỉ test được REST endpoints qua curl, không test được phần gửi/nhận qua `/app/chat.send` và
+`/user/queue/messages` bằng công cụ dòng lệnh sẵn có). Nên tự tay thử gửi tin nhắn giữa 2 tài khoản
+trên trình duyệt thật để xác nhận trước khi coi Chat/Notification real-time là hoàn tất 100%.

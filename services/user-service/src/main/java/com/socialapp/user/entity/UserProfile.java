@@ -44,6 +44,16 @@ public class UserProfile {
 
     private String location;
 
+    /** Free-text "Làm việc tại X" / "Học tại Y" line, Facebook-style — a
+     * single field rather than Facebook's real multi-entry work/education
+     * history, which this app doesn't model. */
+    private String workplace;
+
+    /** Facebook-style reciprocal read receipts: off for me also hides the other person's "seen" status from me. */
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    @Builder.Default
+    private boolean readReceiptsEnabled = true;
+
     @Column(nullable = false)
     private Instant createdAt;
 

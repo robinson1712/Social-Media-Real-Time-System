@@ -76,7 +76,7 @@ class ChatStompControllerTest {
     void sendMessage_notAParticipant_throwsForbiddenAndNeverPersistsOrPublishes() {
         Conversation conv = conversation("conv-1", ConversationType.PRIVATE, List.of("alice", "bob"));
         when(conversationRepository.findById("conv-1")).thenReturn(Optional.of(conv));
-        ChatSendRequest request = new ChatSendRequest("conv-1", "hi", null);
+        ChatSendRequest request = new ChatSendRequest("conv-1", "hi", null, null, null);
 
         assertThatThrownBy(() -> controller.sendMessage(request, new StompPrincipal("eve")))
                 .isInstanceOf(ForbiddenException.class);
@@ -89,7 +89,7 @@ class ChatStompControllerTest {
     @Test
     void sendMessage_conversationNotFound_throwsResourceNotFound() {
         when(conversationRepository.findById("missing")).thenReturn(Optional.empty());
-        ChatSendRequest request = new ChatSendRequest("missing", "hi", null);
+        ChatSendRequest request = new ChatSendRequest("missing", "hi", null, null, null);
 
         assertThatThrownBy(() -> controller.sendMessage(request, new StompPrincipal("alice")))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -100,7 +100,7 @@ class ChatStompControllerTest {
         Conversation conv = conversation("conv-1", ConversationType.PRIVATE, List.of("alice", "bob"));
         when(conversationRepository.findById("conv-1")).thenReturn(Optional.of(conv));
         when(messageRepository.save(any(Message.class))).thenAnswer(inv -> inv.getArgument(0));
-        ChatSendRequest request = new ChatSendRequest("conv-1", "hello bob", null);
+        ChatSendRequest request = new ChatSendRequest("conv-1", "hello bob", null, null, null);
 
         controller.sendMessage(request, new StompPrincipal("alice"));
 
@@ -130,7 +130,7 @@ class ChatStompControllerTest {
         Conversation conv = conversation("conv-2", ConversationType.GROUP, List.of("alice", "bob", "carol"));
         when(conversationRepository.findById("conv-2")).thenReturn(Optional.of(conv));
         when(messageRepository.save(any(Message.class))).thenAnswer(inv -> inv.getArgument(0));
-        ChatSendRequest request = new ChatSendRequest("conv-2", "hey everyone", null);
+        ChatSendRequest request = new ChatSendRequest("conv-2", "hey everyone", null, null, null);
 
         controller.sendMessage(request, new StompPrincipal("alice"));
 
@@ -144,12 +144,28 @@ class ChatStompControllerTest {
     }
 
     @Test
+    void sendMessage_storyReply_persistsStoryReplyFieldsOnMessage() {
+        Conversation conv = conversation("conv-1", ConversationType.PRIVATE, List.of("alice", "bob"));
+        when(conversationRepository.findById("conv-1")).thenReturn(Optional.of(conv));
+        when(messageRepository.save(any(Message.class))).thenAnswer(inv -> inv.getArgument(0));
+        ChatSendRequest request = new ChatSendRequest(
+                "conv-1", "nice story!", null, "story-1", "http://media/story-1.png");
+
+        controller.sendMessage(request, new StompPrincipal("alice"));
+
+        ArgumentCaptor<Message> messageCaptor = ArgumentCaptor.forClass(Message.class);
+        verify(messageRepository).save(messageCaptor.capture());
+        assertThat(messageCaptor.getValue().getStoryReplyId()).isEqualTo("story-1");
+        assertThat(messageCaptor.getValue().getStoryReplyPreviewUrl()).isEqualTo("http://media/story-1.png");
+    }
+
+    @Test
     void sendMessage_contentLongerThan100Chars_previewIsTruncated() {
         Conversation conv = conversation("conv-1", ConversationType.PRIVATE, List.of("alice", "bob"));
         when(conversationRepository.findById("conv-1")).thenReturn(Optional.of(conv));
         when(messageRepository.save(any(Message.class))).thenAnswer(inv -> inv.getArgument(0));
         String longContent = "x".repeat(150);
-        ChatSendRequest request = new ChatSendRequest("conv-1", longContent, null);
+        ChatSendRequest request = new ChatSendRequest("conv-1", longContent, null, null, null);
 
         controller.sendMessage(request, new StompPrincipal("alice"));
 

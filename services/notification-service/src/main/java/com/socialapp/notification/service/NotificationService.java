@@ -61,4 +61,13 @@ public class NotificationService {
     public long unreadCount(String userId) {
         return notificationRepository.countByRecipientIdAndReadFalse(userId);
     }
+
+    public void delete(String id, String userId) {
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Notification not found: " + id));
+        if (!notification.getRecipientId().equals(userId)) {
+            throw new ForbiddenException("Cannot modify another user's notification");
+        }
+        notificationRepository.delete(notification);
+    }
 }

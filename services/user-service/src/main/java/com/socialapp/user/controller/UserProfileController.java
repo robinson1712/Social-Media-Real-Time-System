@@ -1,6 +1,7 @@
 package com.socialapp.user.controller;
 
 import com.socialapp.common.dto.ApiResponse;
+import com.socialapp.common.dto.PageResponse;
 import com.socialapp.common.security.CurrentUserContext;
 import com.socialapp.user.dto.MediaUrlRequest;
 import com.socialapp.user.dto.UpdateProfileRequest;
@@ -8,12 +9,15 @@ import com.socialapp.user.dto.UserProfileResponse;
 import com.socialapp.user.service.UserProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -26,6 +30,13 @@ public class UserProfileController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UserProfileResponse>> getProfile(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success(userProfileService.getProfile(id)));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<PageResponse<UserProfileResponse>>> search(
+            @RequestParam String q,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(userProfileService.search(q, pageable))));
     }
 
     @GetMapping("/me")

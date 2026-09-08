@@ -20,8 +20,11 @@ public class PostEventListener {
 
     @KafkaListener(topics = KafkaTopics.COMMENT_CREATED, groupId = "${spring.kafka.consumer.group-id}")
     public void onCommentCreated(CommentCreatedEvent event) {
+        if (!TargetType.POST.name().equals(event.targetType())) {
+            return;
+        }
         if (event.parentCommentId() == null) {
-            postService.incrementCommentCount(event.postId());
+            postService.incrementCommentCount(event.targetId());
         }
     }
 

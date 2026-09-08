@@ -3,6 +3,7 @@ package com.socialapp.chat.controller;
 import com.socialapp.chat.document.Conversation;
 import com.socialapp.chat.document.Message;
 import com.socialapp.chat.dto.CreateConversationRequest;
+import com.socialapp.chat.dto.PresenceBatchRequest;
 import com.socialapp.chat.service.ChatService;
 import com.socialapp.common.dto.ApiResponse;
 import com.socialapp.common.dto.PageResponse;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -57,8 +59,19 @@ public class ChatController {
         return ResponseEntity.ok(ApiResponse.success("Marked as read", null));
     }
 
+    @DeleteMapping("/messages/{id}")
+    public ResponseEntity<ApiResponse<Message>> deleteMessage(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success("Message deleted", chatService.deleteMessage(id, CurrentUserContext.getUserId())));
+    }
+
     @GetMapping("/presence/{userId}")
     public ResponseEntity<ApiResponse<Map<String, Boolean>>> getPresence(@PathVariable String userId) {
         return ResponseEntity.ok(ApiResponse.success(Map.of("online", chatService.isOnline(userId))));
+    }
+
+    @PostMapping("/presence/batch")
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> getPresenceBatch(@RequestBody PresenceBatchRequest request) {
+        List<String> userIds = request.userIds() != null ? request.userIds() : List.of();
+        return ResponseEntity.ok(ApiResponse.success(chatService.onlineStatuses(userIds)));
     }
 }

@@ -81,4 +81,9 @@ public class FanpageController {
     public ResponseEntity<ApiResponse<PageResponse<Fanpage>>> myManagedPages(@PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(fanpageService.myManagedPages(pageable))));
     }
+
+    @GetMapping("/me/followed")
+    public ResponseEntity<ApiResponse<PageResponse<Fanpage>>> myFollowedPages(@PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(fanpageService.myFollowedPages(pageable))));
+    }
 }

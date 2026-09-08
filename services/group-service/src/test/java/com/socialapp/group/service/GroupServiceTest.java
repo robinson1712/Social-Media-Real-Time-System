@@ -389,6 +389,102 @@ class GroupServiceTest {
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
+    @Test
+    void approveMember_byApprovedModerator_isAllowed() {
+        CurrentUserContext.setForTests("mod-1", List.of("USER"));
+        GroupMember moderatorMembership = existingMember("group-1", "mod-1", MemberRole.MODERATOR, MemberStatus.APPROVED);
+        GroupMember pendingTarget = existingMember("group-1", "target-1", MemberRole.MEMBER, MemberStatus.PENDING);
+        when(groupMemberRepository.findByGroupIdAndUserId("group-1", "mod-1")).thenReturn(Optional.of(moderatorMembership));
+        when(groupMemberRepository.findByGroupIdAndUserId("group-1", "target-1")).thenReturn(Optional.of(pendingTarget));
+        when(groupMemberRepository.save(any(GroupMember.class))).thenAnswer(inv -> inv.getArgument(0));
+        Group group = existingGroup("group-1", "owner-1", GroupPrivacy.PRIVATE, 5);
+        when(groupRepository.findById("group-1")).thenReturn(Optional.of(group));
+        when(groupRepository.save(any(Group.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        GroupMember approved = groupService.approveMember("group-1", "target-1");
+
+        assertThat(approved.getStatus()).isEqualTo(MemberStatus.APPROVED);
+    }
+
+    // ---------- removeMember: MODERATOR is not sufficient ----------
+
+    @Test
+    void removeMember_byModerator_throwsForbidden() {
+        CurrentUserContext.setForTests("mod-1", List.of("USER"));
+        GroupMember moderatorMembership = existingMember("group-1", "mod-1", MemberRole.MODERATOR, MemberStatus.APPROVED);
+        when(groupMemberRepository.findByGroupIdAndUserId("group-1", "mod-1")).thenReturn(Optional.of(moderatorMembership));
+
+        assertThatThrownBy(() -> groupService.removeMember("group-1", "target-1"))
+                .isInstanceOf(ForbiddenException.class);
+
+        verify(groupMemberRepository, never()).delete(any());
+    }
+
+    // ---------- changeRole ----------
+
+    @Test
+    void changeRole_byAdmin_promotesMemberToModerator() {
+        CurrentUserContext.setForTests("admin-1", List.of("USER"));
+        GroupMember adminMembership = existingMember("group-1", "admin-1", MemberRole.ADMIN, MemberStatus.APPROVED);
+        GroupMember target = existingMember("group-1", "target-1", MemberRole.MEMBER, MemberStatus.APPROVED);
+        when(groupMemberRepository.findByGroupIdAndUserId("group-1", "admin-1")).thenReturn(Optional.of(adminMembership));
+        when(groupMemberRepository.findByGroupIdAndUserId("group-1", "target-1")).thenReturn(Optional.of(target));
+        when(groupMemberRepository.save(any(GroupMember.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        GroupMember result = groupService.changeRole("group-1", "target-1", MemberRole.MODERATOR);
+
+        assertThat(result.getRole()).isEqualTo(MemberRole.MODERATOR);
+    }
+
+    @Test
+    void changeRole_demotingLastAdmin_throwsBadRequest() {
+        CurrentUserContext.setForTests("admin-1", List.of("USER"));
+        GroupMember adminMembership = existingMember("group-1", "admin-1", MemberRole.ADMIN, MemberStatus.APPROVED);
+        when(groupMemberRepository.findByGroupIdAndUserId("group-1", "admin-1")).thenReturn(Optional.of(adminMembership));
+        when(groupMemberRepository.countByGroupIdAndRoleAndStatus("group-1", MemberRole.ADMIN, MemberStatus.APPROVED)).thenReturn(1L);
+
+        assertThatThrownBy(() -> groupService.changeRole("group-1", "admin-1", MemberRole.MEMBER))
+                .isInstanceOf(com.socialapp.common.exception.BadRequestException.class);
+
+        verify(groupMemberRepository, never()).save(any());
+    }
+
+    @Test
+    void changeRole_demotingOneOfSeveralAdmins_isAllowed() {
+        CurrentUserContext.setForTests("admin-1", List.of("USER"));
+        GroupMember adminMembership = existingMember("group-1", "admin-1", MemberRole.ADMIN, MemberStatus.APPROVED);
+        GroupMember secondAdmin = existingMember("group-1", "admin-2", MemberRole.ADMIN, MemberStatus.APPROVED);
+        when(groupMemberRepository.findByGroupIdAndUserId("group-1", "admin-1")).thenReturn(Optional.of(adminMembership));
+        when(groupMemberRepository.findByGroupIdAndUserId("group-1", "admin-2")).thenReturn(Optional.of(secondAdmin));
+        when(groupMemberRepository.countByGroupIdAndRoleAndStatus("group-1", MemberRole.ADMIN, MemberStatus.APPROVED)).thenReturn(2L);
+        when(groupMemberRepository.save(any(GroupMember.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        GroupMember result = groupService.changeRole("group-1", "admin-2", MemberRole.MEMBER);
+
+        assertThat(result.getRole()).isEqualTo(MemberRole.MEMBER);
+    }
+
+    @Test
+    void changeRole_byModerator_throwsForbidden() {
+        CurrentUserContext.setForTests("mod-1", List.of("USER"));
+        GroupMember moderatorMembership = existingMember("group-1", "mod-1", MemberRole.MODERATOR, MemberStatus.APPROVED);
+        when(groupMemberRepository.findByGroupIdAndUserId("group-1", "mod-1")).thenReturn(Optional.of(moderatorMembership));
+
+        assertThatThrownBy(() -> groupService.changeRole("group-1", "target-1", MemberRole.MODERATOR))
+                .isInstanceOf(ForbiddenException.class);
+    }
+
+    @Test
+    void changeRole_targetNotApprovedMember_throwsResourceNotFound() {
+        CurrentUserContext.setForTests("admin-1", List.of("USER"));
+        GroupMember adminMembership = existingMember("group-1", "admin-1", MemberRole.ADMIN, MemberStatus.APPROVED);
+        when(groupMemberRepository.findByGroupIdAndUserId("group-1", "admin-1")).thenReturn(Optional.of(adminMembership));
+        when(groupMemberRepository.findByGroupIdAndUserId("group-1", "target-1")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> groupService.changeRole("group-1", "target-1", MemberRole.MODERATOR))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
     // ---------- leave ----------
 
     @Test

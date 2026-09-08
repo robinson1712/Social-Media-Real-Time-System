@@ -8,9 +8,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashSet;
@@ -18,12 +20,14 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -41,6 +45,8 @@ class FeedQueryServiceTest {
     @Mock
     private ZSetOperations<String, String> zSetOperations;
     @Mock
+    private SetOperations<String, String> setOperations;
+    @Mock
     private PostClient postClient;
 
     private FeedQueryService feedQueryService;
@@ -48,6 +54,8 @@ class FeedQueryServiceTest {
     @BeforeEach
     void setUp() {
         lenient().when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+        lenient().when(redisTemplate.opsForSet()).thenReturn(setOperations);
+        lenient().when(setOperations.members(anyString())).thenReturn(Set.of());
         feedQueryService = new FeedQueryService(redisTemplate, postClient);
     }
 
@@ -56,13 +64,17 @@ class FeedQueryServiceTest {
         when(zSetOperations.reverseRange(eq(KEY), eq(0L), anyLong())).thenReturn(pool);
     }
 
+    private void mockSeen(String userId, Set<String> seenPostIds) {
+        when(setOperations.members("feed:seen:" + userId)).thenReturn(seenPostIds);
+    }
+
     private void mockPosts(List<PostDto> posts) {
         when(postClient.getBatch(anyString())).thenReturn(ApiResponse.success(posts));
     }
 
     private static PostDto post(String id, Instant createdAt, long reactionCount, long commentCount) {
-        return new PostDto(id, "author1", "content", List.of(), "PUBLIC", null, null,
-                commentCount, reactionCount, createdAt);
+        return new PostDto(id, "author1", "content", List.of(), "PUBLIC", List.of(), null, null, null,
+                commentCount, reactionCount, false, 0, createdAt);
     }
 
     // ---------- empty pool ----------
@@ -196,5 +208,64 @@ class FeedQueryServiceTest {
         List<PostDto> result = feedQueryService.getFeed("user1", 0, 10);
 
         assertThat(result).isEmpty();
+    }
+
+    // ---------- seen tracking / 7-day flop ----------
+
+    @Test
+    void getFeed_unseenPostOlderThanSevenDays_isFlopped() {
+        Instant now = Instant.now();
+        PostDto stale = post("stale", now.minus(8, ChronoUnit.DAYS), 0, 0);
+        PostDto fresh = post("fresh", now.minus(1, ChronoUnit.HOURS), 0, 0);
+        mockPool(List.of("stale", "fresh"));
+        mockPosts(List.of(stale, fresh));
+        mockSeen("user1", Set.of());
+
+        List<PostDto> result = feedQueryService.getFeed("user1", 0, 10);
+
+        assertThat(result).extracting(PostDto::id).containsExactly("fresh");
+    }
+
+    @Test
+    void getFeed_seenPostOlderThanSevenDays_isNotFloppedJustDeprioritized() {
+        Instant now = Instant.now();
+        PostDto staleButSeen = post("stale", now.minus(8, ChronoUnit.DAYS), 0, 0);
+        mockPool(List.of("stale"));
+        mockPosts(List.of(staleButSeen));
+        mockSeen("user1", Set.of("stale"));
+
+        List<PostDto> result = feedQueryService.getFeed("user1", 0, 10);
+
+        assertThat(result).extracting(PostDto::id).containsExactly("stale");
+    }
+
+    @Test
+    void getFeed_seenPost_ranksBelowOtherwiseEqualUnseenPost() {
+        Instant now = Instant.now();
+        PostDto seen = post("seen", now.minus(1, ChronoUnit.HOURS), 3, 1);
+        PostDto unseen = post("unseen", now.minus(1, ChronoUnit.HOURS), 3, 1);
+        mockPool(List.of("seen", "unseen"));
+        mockPosts(List.of(seen, unseen));
+        mockSeen("user1", Set.of("seen"));
+
+        List<PostDto> result = feedQueryService.getFeed("user1", 0, 10);
+
+        assertThat(result).extracting(PostDto::id).containsExactly("unseen", "seen");
+    }
+
+    @Test
+    void markSeen_addsPostIdsToUsersSeenSetAndSetsExpiry() {
+        feedQueryService.markSeen("user1", List.of("p1", "p2"));
+
+        verify(setOperations).add("feed:seen:user1", "p1", "p2");
+        verify(redisTemplate).expire(eq("feed:seen:user1"), any(Duration.class));
+    }
+
+    @Test
+    void markSeen_emptyList_doesNothing() {
+        feedQueryService.markSeen("user1", List.of());
+
+        verifyNoInteractions(setOperations);
+        verify(redisTemplate, never()).expire(anyString(), any(Duration.class));
     }
 }

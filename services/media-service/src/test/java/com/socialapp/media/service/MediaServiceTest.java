@@ -163,6 +163,45 @@ class MediaServiceTest {
     }
 
     @Test
+    void upload_unsupportedContentType_throwsBadRequestAndNeverTouchesStorage() throws Exception {
+        MultipartFile file = new MockMultipartFile("file", "script.exe", "application/x-msdownload", "hello".getBytes());
+
+        assertThatThrownBy(() -> mediaService.upload("user-1", file, "post"))
+                .isInstanceOf(BadRequestException.class);
+
+        verify(minioClient, never()).putObject(any());
+        verify(mediaFileRepository, never()).save(any());
+    }
+
+    @Test
+    void upload_videoForImageOnlyPurpose_throwsBadRequest() {
+        MultipartFile file = new MockMultipartFile("file", "clip.mp4", "video/mp4", "hello".getBytes());
+
+        assertThatThrownBy(() -> mediaService.upload("user-1", file, "avatar"))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void upload_videoForVideoCapablePurpose_isAllowed() throws Exception {
+        MultipartFile file = new MockMultipartFile("file", "clip.mp4", "video/mp4", "hello".getBytes());
+        when(minioClient.putObject(any(PutObjectArgs.class))).thenReturn(mock(ObjectWriteResponse.class));
+        when(mediaFileRepository.save(any(MediaFile.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mediaService.upload("user-1", file, "reel");
+
+        verify(minioClient).putObject(any(PutObjectArgs.class));
+    }
+
+    @Test
+    void upload_oversizedImageForImageOnlyPurpose_throwsBadRequest() {
+        byte[] tooLarge = new byte[11 * 1024 * 1024];
+        MultipartFile file = new MockMultipartFile("file", "huge.png", "image/png", tooLarge);
+
+        assertThatThrownBy(() -> mediaService.upload("user-1", file, "cover"))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
     void upload_invalidPurpose_throwsBadRequest() {
         MultipartFile file = new MockMultipartFile("file", "photo.png", "image/png", "hello".getBytes());
 

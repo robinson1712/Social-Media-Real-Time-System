@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
@@ -38,6 +39,8 @@ public class Notification {
     @Builder.Default
     private boolean read = false;
 
+    /** MongoDB TTL index — notifications are auto-deleted 8 weeks after creation. */
+    @Indexed(expireAfterSeconds = 8 * 7 * 24 * 60 * 60)
     @Builder.Default
     private Instant createdAt = Instant.now();
 }

@@ -37,6 +37,9 @@ import java.util.Set;
 public class FeedQueryService {
 
     private static final String FEED_KEY_PREFIX = "feed:";
+    private static final String SEEN_KEY_PREFIX = "feed:seen:";
+    /** Seen-post markers don't need to live forever — this is long enough to cover the 7-day flop window below with room to spare. */
+    private static final Duration SEEN_TTL = Duration.ofDays(14);
 
     /** How far back into each user's feed a read is willing to re-rank. */
     private static final int CANDIDATE_POOL_SIZE = 200;
@@ -45,6 +48,11 @@ public class FeedQueryService {
     private static final double COMMENT_WEIGHT = 2.0;
     /** Hacker News uses 1.8; a social feed wants engagement to decay a bit slower. */
     private static final double GRAVITY = 1.5;
+
+    /** A post you've already seen is de-prioritized, not hidden — it can still resurface if there's little else to show. */
+    private static final double SEEN_PENALTY = 0.3;
+    /** Never-seen posts older than this are dropped from the feed entirely ("flopped") rather than just decayed further. */
+    private static final Duration FLOP_AGE = Duration.ofDays(7);
 
     private final StringRedisTemplate redisTemplate;
     private final PostClient postClient;
@@ -57,9 +65,15 @@ public class FeedQueryService {
             return Collections.emptyList();
         }
         List<String> postIds = new ArrayList<>(new LinkedHashSet<>(pool));
+        Set<String> seenIds = redisTemplate.opsForSet().members(SEEN_KEY_PREFIX + userId);
+        if (seenIds == null) {
+            seenIds = Collections.emptySet();
+        }
+        final Set<String> seen = seenIds;
 
         List<PostDto> ranked = fetchPosts(postIds).stream()
-                .sorted(Comparator.comparingDouble(this::rankScore).reversed())
+                .filter(post -> !isFlopped(post, seen))
+                .sorted(Comparator.comparingDouble((PostDto post) -> rankScore(post, seen)).reversed())
                 .toList();
 
         int from = Math.min(page * size, ranked.size());
@@ -67,7 +81,24 @@ public class FeedQueryService {
         return ranked.subList(from, to);
     }
 
-    private double rankScore(PostDto post) {
+    /** Records that [userId] has had these posts rendered in their feed — see rankScore/isFlopped for how this is used on the next read. */
+    public void markSeen(String userId, List<String> postIds) {
+        if (postIds == null || postIds.isEmpty()) {
+            return;
+        }
+        String key = SEEN_KEY_PREFIX + userId;
+        redisTemplate.opsForSet().add(key, postIds.toArray(new String[0]));
+        redisTemplate.expire(key, SEEN_TTL);
+    }
+
+    private boolean isFlopped(PostDto post, Set<String> seen) {
+        if (post.createdAt() == null || seen.contains(post.id())) {
+            return false;
+        }
+        return Duration.between(post.createdAt(), Instant.now()).compareTo(FLOP_AGE) >= 0;
+    }
+
+    private double rankScore(PostDto post, Set<String> seen) {
         double ageHours = post.createdAt() == null
                 ? 0
                 : Duration.between(post.createdAt(), Instant.now()).toMinutes() / 60.0;
@@ -82,7 +113,8 @@ public class FeedQueryService {
         double engagement = REACTION_WEIGHT * post.reactionCount() + COMMENT_WEIGHT * post.commentCount();
         double engagementBoost = Math.log(1 + engagement);
 
-        return recencyScore * (1 + engagementBoost);
+        double score = recencyScore * (1 + engagementBoost);
+        return seen.contains(post.id()) ? score * SEEN_PENALTY : score;
     }
 
     private List<PostDto> fetchPosts(List<String> postIds) {

@@ -33,7 +33,14 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             "/api/auth/login",
             "/api/auth/refresh",
             "/actuator/**",
-            "/eureka/**"
+            "/eureka/**",
+            // Aggregated Swagger UI (see application.yml's springdoc.swagger-ui.urls)
+            // and the per-service /docs/**/v3/api-docs routes it fetches from.
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/webjars/**",
+            "/v3/api-docs/**",
+            "/docs/**"
     );
 
     private final JwtTokenProvider jwtTokenProvider;

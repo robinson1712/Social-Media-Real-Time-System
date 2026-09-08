@@ -4,6 +4,7 @@ import com.socialapp.common.dto.ApiResponse;
 import com.socialapp.common.dto.PageResponse;
 import com.socialapp.common.security.CurrentUserContext;
 import com.socialapp.user.dto.FriendshipResponse;
+import com.socialapp.user.dto.FriendshipStatusResponse;
 import com.socialapp.user.dto.UserProfileResponse;
 import com.socialapp.user.service.FriendshipService;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +61,12 @@ public class FriendshipController {
     public ResponseEntity<ApiResponse<PageResponse<FriendshipResponse>>> listFriendRequests(Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success(
                 friendshipService.listFriendRequests(CurrentUserContext.getUserId(), pageable)));
+    }
+
+    @GetMapping("/{targetId}/friendship-status")
+    public ResponseEntity<ApiResponse<FriendshipStatusResponse>> friendshipStatus(@PathVariable String targetId) {
+        return ResponseEntity.ok(ApiResponse.success(
+                friendshipService.relationshipStatus(CurrentUserContext.getUserId(), targetId)));
     }
 
     @GetMapping("/{id}/friend-ids")

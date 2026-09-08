@@ -3,7 +3,9 @@ C:\Users\ADMIN\Desktop\projects_social_media_app\services\story-service\src\main
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\story-service\src\main\java\com\socialapp\story\controller\StoryController.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\story-service\src\main\java\com\socialapp\story\document\MediaType.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\story-service\src\main\java\com\socialapp\story\document\Story.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\story-service\src\main\java\com\socialapp\story\document\TextOverlay.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\story-service\src\main\java\com\socialapp\story\dto\CreateStoryRequest.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\story-service\src\main\java\com\socialapp\story\dto\TextOverlayRequest.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\story-service\src\main\java\com\socialapp\story\listener\StoryEventListener.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\story-service\src\main\java\com\socialapp\story\repository\StoryRepository.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\story-service\src\main\java\com\socialapp\story\service\StoryService.java

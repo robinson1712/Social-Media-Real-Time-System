@@ -1,6 +1,7 @@
 package com.socialapp.group.repository;
 
 import com.socialapp.group.entity.GroupMember;
+import com.socialapp.group.entity.MemberRole;
 import com.socialapp.group.entity.MemberStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,8 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, String
     Page<GroupMember> findByGroupIdAndStatus(String groupId, MemberStatus status, Pageable pageable);
 
     Page<GroupMember> findByUserIdAndStatus(String userId, MemberStatus status, Pageable pageable);
+
+    long countByGroupIdAndRoleAndStatus(String groupId, MemberRole role, MemberStatus status);
 
     void deleteByGroupId(String groupId);
 }

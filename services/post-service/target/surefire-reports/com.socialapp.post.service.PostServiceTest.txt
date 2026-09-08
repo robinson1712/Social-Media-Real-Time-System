@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.socialapp.post.service.PostServiceTest
 -------------------------------------------------------------------------------
-Tests run: 18, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.778 s -- in com.socialapp.post.service.PostServiceTest
+Tests run: 45, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.879 s -- in com.socialapp.post.service.PostServiceTest

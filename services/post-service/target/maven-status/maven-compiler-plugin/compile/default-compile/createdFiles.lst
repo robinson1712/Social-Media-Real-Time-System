@@ -1,9 +1,15 @@
+com\socialapp\post\dto\ShareRequest.class
+com\socialapp\post\client\UserServiceClient.class
 com\socialapp\post\entity\Post.class
 com\socialapp\post\PostServiceApplication.class
-com\socialapp\post\controller\PostController.class
 com\socialapp\post\event\PostEventListener.class
+com\socialapp\post\service\PostService$1.class
 com\socialapp\post\entity\Post$PostBuilder.class
 com\socialapp\post\repository\PostRepository.class
 com\socialapp\post\dto\CreatePostRequest.class
+com\socialapp\post\client\UserServiceClientFallbackFactory.class
+com\socialapp\post\controller\PostController.class
+com\socialapp\post\client\ReelClient.class
+com\socialapp\post\client\ReelClientFallbackFactory.class
 com\socialapp\post\dto\UpdatePostRequest.class
 com\socialapp\post\service\PostService.class

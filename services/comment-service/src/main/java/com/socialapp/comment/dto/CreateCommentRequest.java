@@ -1,4 +1,7 @@
 package com.socialapp.comment.dto;
 
-public record CreateCommentRequest(String postId, String content, String parentCommentId) {
+import com.socialapp.common.enums.TargetType;
+
+public record CreateCommentRequest(
+        TargetType targetType, String targetId, String targetOwnerId, String content, String parentCommentId) {
 }

@@ -5,6 +5,7 @@ C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\enums\TargetType.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\CommentCreatedEvent.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\ContentRemovedEvent.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\FollowEvent.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\FriendRequestEvent.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\GroupEvent.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\KafkaTopics.java
@@ -12,6 +13,7 @@ C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\MessageEvent.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\PageEvent.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\PostCreatedEvent.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\PostTaggedEvent.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\ReactionEvent.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\ReelCreatedEvent.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\common\common-lib\src\main\java\com\socialapp\common\event\StoryCreatedEvent.java

@@ -23,10 +23,10 @@ public class ReelEventListener {
 
     @KafkaListener(topics = KafkaTopics.COMMENT_CREATED, groupId = "${spring.kafka.consumer.group-id}")
     public void onCommentCreated(CommentCreatedEvent event) {
-        if (event.parentCommentId() != null) {
+        if (!REEL_TARGET_TYPE.equals(event.targetType()) || event.parentCommentId() != null) {
             return;
         }
-        reelRepository.findById(event.postId()).ifPresent(reel -> {
+        reelRepository.findById(event.targetId()).ifPresent(reel -> {
             reel.setCommentCount(reel.getCommentCount() + 1);
             reelRepository.save(reel);
         });

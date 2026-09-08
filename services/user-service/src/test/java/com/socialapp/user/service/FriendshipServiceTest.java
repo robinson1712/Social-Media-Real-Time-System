@@ -8,6 +8,8 @@ import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
 import com.socialapp.common.exception.UnauthorizedException;
 import com.socialapp.user.dto.FriendshipResponse;
+import com.socialapp.user.dto.FriendshipStatusResponse;
+import com.socialapp.user.dto.RelationshipStatus;
 import com.socialapp.user.dto.UserProfileResponse;
 import com.socialapp.user.entity.Block;
 import com.socialapp.user.entity.Friendship;
@@ -57,6 +59,8 @@ class FriendshipServiceTest {
     private BlockRepository blockRepository;
     @Mock
     private UserProfileRepository userProfileRepository;
+    @Mock
+    private FollowService followService;
 
     private KafkaTemplate<String, Object> kafkaTemplate;
     private FriendshipService friendshipService;
@@ -64,7 +68,8 @@ class FriendshipServiceTest {
     @BeforeEach
     void setUp() {
         kafkaTemplate = mock(KafkaTemplate.class);
-        friendshipService = new FriendshipService(friendshipRepository, blockRepository, userProfileRepository, kafkaTemplate);
+        friendshipService = new FriendshipService(
+                friendshipRepository, blockRepository, userProfileRepository, kafkaTemplate, followService);
     }
 
     private Friendship friendship(String id, String requesterId, String addresseeId, FriendshipStatus status) {
@@ -159,6 +164,8 @@ class FriendshipServiceTest {
         ArgumentCaptor<FriendRequestEvent> eventCaptor = ArgumentCaptor.forClass(FriendRequestEvent.class);
         verify(kafkaTemplate).send(eq(KafkaTopics.FRIEND_REQUEST), eventCaptor.capture());
         assertThat(eventCaptor.getValue().status()).isEqualTo("ACCEPTED");
+
+        verify(followService).autoFollowBothDirections("user-1", "user-2");
     }
 
     @Test
@@ -199,14 +206,14 @@ class FriendshipServiceTest {
     // ---- decline ----
 
     @Test
-    void decline_byAddressee_success_publishesDeclinedEvent() {
+    void decline_byAddressee_success_deletesRowAndPublishesDeclinedEvent() {
         Friendship pending = friendship("f-1", "user-1", "user-2", FriendshipStatus.PENDING);
         when(friendshipRepository.findById("f-1")).thenReturn(Optional.of(pending));
-        when(friendshipRepository.save(any(Friendship.class))).thenAnswer(inv -> inv.getArgument(0));
 
         FriendshipResponse response = friendshipService.decline("user-2", "f-1");
 
         assertThat(response.status()).isEqualTo(FriendshipStatus.DECLINED);
+        verify(friendshipRepository).delete(pending);
 
         ArgumentCaptor<FriendRequestEvent> eventCaptor = ArgumentCaptor.forClass(FriendRequestEvent.class);
         verify(kafkaTemplate).send(eq(KafkaTopics.FRIEND_REQUEST), eventCaptor.capture());
@@ -214,14 +221,27 @@ class FriendshipServiceTest {
     }
 
     @Test
-    void decline_byRequester_throwsForbiddenAndNeverSaves() {
+    void decline_byRequester_cancelsOwnPendingRequest() {
+        // The requester withdrawing their own sent request goes through the same
+        // decline() path — same outcome (row deleted), different caller.
         Friendship pending = friendship("f-1", "user-1", "user-2", FriendshipStatus.PENDING);
         when(friendshipRepository.findById("f-1")).thenReturn(Optional.of(pending));
 
-        assertThatThrownBy(() -> friendshipService.decline("user-1", "f-1"))
+        FriendshipResponse response = friendshipService.decline("user-1", "f-1");
+
+        assertThat(response.status()).isEqualTo(FriendshipStatus.DECLINED);
+        verify(friendshipRepository).delete(pending);
+    }
+
+    @Test
+    void decline_byUnrelatedUser_throwsForbiddenAndNeverDeletes() {
+        Friendship pending = friendship("f-1", "user-1", "user-2", FriendshipStatus.PENDING);
+        when(friendshipRepository.findById("f-1")).thenReturn(Optional.of(pending));
+
+        assertThatThrownBy(() -> friendshipService.decline("user-3", "f-1"))
                 .isInstanceOf(ForbiddenException.class);
 
-        verify(friendshipRepository, never()).save(any());
+        verify(friendshipRepository, never()).delete(any(Friendship.class));
     }
 
     @Test
@@ -327,6 +347,49 @@ class FriendshipServiceTest {
         List<String> ids = friendshipService.friendIds("user-1");
 
         assertThat(ids).containsExactlyInAnyOrder("friend-a", "friend-b");
+    }
+
+    // ---- relationshipStatus ----
+
+    @Test
+    void relationshipStatus_noRow_returnsNone() {
+        when(friendshipRepository.findAnyBetween("user-1", "user-2")).thenReturn(Optional.empty());
+
+        FriendshipStatusResponse status = friendshipService.relationshipStatus("user-1", "user-2");
+
+        assertThat(status.status()).isEqualTo(RelationshipStatus.NONE);
+        assertThat(status.friendshipId()).isNull();
+    }
+
+    @Test
+    void relationshipStatus_acceptedRow_returnsFriends() {
+        Friendship accepted = friendship("f-1", "user-1", "user-2", FriendshipStatus.ACCEPTED);
+        when(friendshipRepository.findAnyBetween("user-1", "user-2")).thenReturn(Optional.of(accepted));
+
+        FriendshipStatusResponse status = friendshipService.relationshipStatus("user-1", "user-2");
+
+        assertThat(status.status()).isEqualTo(RelationshipStatus.FRIENDS);
+        assertThat(status.friendshipId()).isEqualTo("f-1");
+    }
+
+    @Test
+    void relationshipStatus_callerIsRequesterOfPending_returnsPendingSent() {
+        Friendship pending = friendship("f-1", "user-1", "user-2", FriendshipStatus.PENDING);
+        when(friendshipRepository.findAnyBetween("user-1", "user-2")).thenReturn(Optional.of(pending));
+
+        FriendshipStatusResponse status = friendshipService.relationshipStatus("user-1", "user-2");
+
+        assertThat(status.status()).isEqualTo(RelationshipStatus.PENDING_SENT);
+    }
+
+    @Test
+    void relationshipStatus_callerIsAddresseeOfPending_returnsPendingReceived() {
+        Friendship pending = friendship("f-1", "user-1", "user-2", FriendshipStatus.PENDING);
+        when(friendshipRepository.findAnyBetween("user-2", "user-1")).thenReturn(Optional.of(pending));
+
+        FriendshipStatusResponse status = friendshipService.relationshipStatus("user-2", "user-1");
+
+        assertThat(status.status()).isEqualTo(RelationshipStatus.PENDING_RECEIVED);
     }
 
     // ---- block ----

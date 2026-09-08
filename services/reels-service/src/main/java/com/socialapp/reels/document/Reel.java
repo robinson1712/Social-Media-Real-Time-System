@@ -38,5 +38,8 @@ public class Reel {
     @Builder.Default
     private int reactionCount = 0;
 
+    @Builder.Default
+    private int shareCount = 0;
+
     private Instant createdAt;
 }

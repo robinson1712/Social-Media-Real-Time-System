@@ -1,3 +1,4 @@
+com\socialapp\feed\dto\MarkSeenRequest.class
 com\socialapp\feed\dto\PostDto.class
 com\socialapp\feed\client\FanpageClientFallbackFactory.class
 com\socialapp\feed\client\PostClientFallbackFactory.class

@@ -14,6 +14,7 @@ com\socialapp\common\security\JwtTokenProvider.class
 com\socialapp\common\event\KafkaTopics.class
 com\socialapp\common\event\CommentCreatedEvent.class
 com\socialapp\common\event\ReelCreatedEvent.class
+com\socialapp\common\event\PostTaggedEvent.class
 com\socialapp\common\event\MatchEvent.class
 com\socialapp\common\exception\BadRequestException.class
 com\socialapp\common\exception\ResourceNotFoundException.class
@@ -21,6 +22,7 @@ com\socialapp\common\enums\Privacy.class
 com\socialapp\common\exception\ApiException.class
 com\socialapp\common\enums\ReactionType.class
 com\socialapp\common\security\CurrentUserContext.class
+com\socialapp\common\event\FollowEvent.class
 com\socialapp\common\exception\UnauthorizedException.class
 com\socialapp\common\moderation\ProfanityFilter.class
 com\socialapp\common\enums\TargetType.class

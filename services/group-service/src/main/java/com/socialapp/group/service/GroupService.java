@@ -129,7 +129,7 @@ public class GroupService {
     @Transactional
     public GroupMember approveMember(String groupId, String userId) {
         String currentUserId = requireUserId();
-        requireAdmin(groupId, currentUserId);
+        requireRole(groupId, currentUserId, MemberRole.ADMIN, MemberRole.MODERATOR);
 
         GroupMember member = groupMemberRepository.findByGroupIdAndUserId(groupId, userId)
                 .filter(m -> m.getStatus() == MemberStatus.PENDING)
@@ -166,7 +166,7 @@ public class GroupService {
     @Transactional
     public void removeMember(String groupId, String userId) {
         String currentUserId = requireUserId();
-        requireAdmin(groupId, currentUserId);
+        requireRole(groupId, currentUserId, MemberRole.ADMIN);
 
         GroupMember member = groupMemberRepository.findByGroupIdAndUserId(groupId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User is not a member of this group"));
@@ -204,12 +204,33 @@ public class GroupService {
         return new PageImpl<>(groups, pageable, memberships.getTotalElements());
     }
 
-    private void requireAdmin(String groupId, String userId) {
+    private void requireRole(String groupId, String userId, MemberRole... allowedRoles) {
         GroupMember member = groupMemberRepository.findByGroupIdAndUserId(groupId, userId)
-                .orElseThrow(() -> new ForbiddenException("Only group admins may perform this action"));
-        if (member.getStatus() != MemberStatus.APPROVED || member.getRole() != MemberRole.ADMIN) {
-            throw new ForbiddenException("Only group admins may perform this action");
+                .orElseThrow(() -> new ForbiddenException("You do not have permission to perform this action"));
+        boolean allowed = member.getStatus() == MemberStatus.APPROVED
+                && java.util.Arrays.asList(allowedRoles).contains(member.getRole());
+        if (!allowed) {
+            throw new ForbiddenException("You do not have permission to perform this action");
         }
+    }
+
+    /** ADMIN-only. Guards against demoting the group's last remaining ADMIN. */
+    @Transactional
+    public GroupMember changeRole(String groupId, String targetUserId, MemberRole newRole) {
+        String currentUserId = requireUserId();
+        requireRole(groupId, currentUserId, MemberRole.ADMIN);
+
+        GroupMember target = groupMemberRepository.findByGroupIdAndUserId(groupId, targetUserId)
+                .filter(m -> m.getStatus() == MemberStatus.APPROVED)
+                .orElseThrow(() -> new ResourceNotFoundException("No approved membership for user " + targetUserId));
+
+        if (target.getRole() == MemberRole.ADMIN && newRole != MemberRole.ADMIN
+                && groupMemberRepository.countByGroupIdAndRoleAndStatus(groupId, MemberRole.ADMIN, MemberStatus.APPROVED) <= 1) {
+            throw new BadRequestException("Cannot demote the last admin of the group");
+        }
+
+        target.setRole(newRole);
+        return groupMemberRepository.save(target);
     }
 
     private void publish(String groupId, String actorId, String targetUserId, String type) {

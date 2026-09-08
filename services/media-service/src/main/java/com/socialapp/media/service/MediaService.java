@@ -20,11 +20,50 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class MediaService {
+
+    // Content-type whitelist — the servlet-level max-file-size config only bounds
+    // size, not type, so without this any file (executables, scripts, ...) could
+    // be uploaded and served back from MinIO's public URL.
+    private static final Set<String> IMAGE_CONTENT_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/gif", "image/webp");
+    private static final Set<String> VIDEO_CONTENT_TYPES = Set.of(
+            "video/mp4", "video/webm", "video/quicktime");
+    // Voice messages (chat only) — browsers' MediaRecorder API produces
+    // audio/webm almost universally; the rest are kept for headroom (e.g. a
+    // future mobile client recording to a different container).
+    private static final Set<String> AUDIO_CONTENT_TYPES = Set.of(
+            "audio/webm", "audio/ogg", "audio/mpeg", "audio/mp4", "audio/wav", "audio/x-wav");
+    // File attachments (chat only) — a fixed whitelist of common office/
+    // document formats, same reasoning as the image/video whitelist above:
+    // without one, chat could be used to upload and redistribute arbitrary
+    // files (executables, scripts) from MinIO's public URL.
+    private static final Set<String> DOCUMENT_CONTENT_TYPES = Set.of(
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/zip",
+            "application/x-zip-compressed",
+            "text/plain");
+    private static final long IMAGE_MAX_BYTES = 10L * 1024 * 1024;
+    // Profile/page/group art is always a still image and small — everything else
+    // (post/story/reel/chat) may legitimately be video, bounded only by the
+    // existing servlet-level max-file-size (50MB).
+    private static final Set<MediaPurpose> IMAGE_ONLY_PURPOSES =
+            EnumSet.of(MediaPurpose.AVATAR, MediaPurpose.COVER, MediaPurpose.PAGE, MediaPurpose.GROUP);
+    // Voice clips and file attachments only make sense as chat messages —
+    // posts/stories/reels stay image-or-video, same as before this change.
+    private static final Set<MediaPurpose> ATTACHMENT_PURPOSES = EnumSet.of(MediaPurpose.CHAT);
 
     private final MinioClient minioClient;
     private final MediaFileRepository mediaFileRepository;
@@ -44,6 +83,7 @@ public class MediaService {
             throw new BadRequestException("File is required");
         }
         MediaPurpose purpose = parsePurpose(purposeRaw);
+        validateFile(file, purpose);
 
         String originalFilename = sanitize(file.getOriginalFilename());
         String objectKey = "%s/%s/%s-%s".formatted(purpose.name(), currentUserId, UUID.randomUUID(), originalFilename);
@@ -112,6 +152,25 @@ public class MediaService {
             return MediaPurpose.valueOf(raw.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new BadRequestException("Invalid purpose: " + raw);
+        }
+    }
+
+    private void validateFile(MultipartFile file, MediaPurpose purpose) {
+        String contentType = file.getContentType();
+        boolean isImage = contentType != null && IMAGE_CONTENT_TYPES.contains(contentType);
+        boolean isVideo = contentType != null && VIDEO_CONTENT_TYPES.contains(contentType);
+        boolean isAttachment = ATTACHMENT_PURPOSES.contains(purpose) && contentType != null
+                && (AUDIO_CONTENT_TYPES.contains(contentType) || DOCUMENT_CONTENT_TYPES.contains(contentType));
+        if (!isImage && !isVideo && !isAttachment) {
+            throw new BadRequestException("Unsupported file type: " + contentType);
+        }
+        if (IMAGE_ONLY_PURPOSES.contains(purpose)) {
+            if (isVideo) {
+                throw new BadRequestException(purpose + " must be an image, not a video");
+            }
+            if (file.getSize() > IMAGE_MAX_BYTES) {
+                throw new BadRequestException(purpose + " image must be 10MB or smaller");
+            }
         }
     }
 

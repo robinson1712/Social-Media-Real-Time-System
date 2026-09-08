@@ -3,6 +3,7 @@ package com.socialapp.dating.service;
 import com.socialapp.common.event.KafkaTopics;
 import com.socialapp.common.event.MatchEvent;
 import com.socialapp.common.exception.ConflictException;
+import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
 import com.socialapp.common.security.CurrentUserContext;
 import com.socialapp.dating.dto.CandidateResponse;
@@ -282,5 +283,53 @@ class DatingServiceTest {
         Page<Match> result = datingService.getMatches(pageable);
 
         assertThat(result).isSameAs(expected);
+    }
+
+    // ---------- unmatch ----------
+
+    private Match match(String id, String user1Id, String user2Id) {
+        return Match.builder().id(id).user1Id(user1Id).user2Id(user2Id).build();
+    }
+
+    @Test
+    void unmatch_byUser1_deletesMatch() {
+        CurrentUserContext.setForTests("alice", List.of("USER"));
+        Match m = match("match-1", "alice", "bob");
+        when(matchRepository.findById("match-1")).thenReturn(Optional.of(m));
+
+        datingService.unmatch("match-1");
+
+        verify(matchRepository).delete(m);
+    }
+
+    @Test
+    void unmatch_byUser2_deletesMatch() {
+        CurrentUserContext.setForTests("bob", List.of("USER"));
+        Match m = match("match-1", "alice", "bob");
+        when(matchRepository.findById("match-1")).thenReturn(Optional.of(m));
+
+        datingService.unmatch("match-1");
+
+        verify(matchRepository).delete(m);
+    }
+
+    @Test
+    void unmatch_byOutsider_throwsForbiddenAndNeverDeletes() {
+        CurrentUserContext.setForTests("stranger", List.of("USER"));
+        Match m = match("match-1", "alice", "bob");
+        when(matchRepository.findById("match-1")).thenReturn(Optional.of(m));
+
+        assertThatThrownBy(() -> datingService.unmatch("match-1"))
+                .isInstanceOf(ForbiddenException.class);
+
+        verify(matchRepository, never()).delete(any());
+    }
+
+    @Test
+    void unmatch_missingMatch_throwsResourceNotFound() {
+        when(matchRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> datingService.unmatch("missing"))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 }

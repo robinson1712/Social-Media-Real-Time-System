@@ -9,6 +9,9 @@ public record CreatePostRequest(
         List<String> mediaUrls,
         Privacy privacy,
         String groupId,
-        String pageId
+        String pageId,
+        /** Only used when privacy == CUSTOM. */
+        List<String> customAudienceUserIds,
+        List<String> taggedUserIds
 ) {
 }

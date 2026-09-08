@@ -15,7 +15,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -58,5 +60,11 @@ public class DatingController {
             @RequestParam(defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(datingService.getMatches(pageable))));
+    }
+
+    @DeleteMapping("/matches/{id}")
+    public ResponseEntity<ApiResponse<Void>> unmatch(@PathVariable String id) {
+        datingService.unmatch(id);
+        return ResponseEntity.ok(ApiResponse.success("Unmatched", null));
     }
 }

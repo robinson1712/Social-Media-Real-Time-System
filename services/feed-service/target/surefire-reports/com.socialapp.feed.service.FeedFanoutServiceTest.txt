@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.socialapp.feed.service.FeedFanoutServiceTest
 -------------------------------------------------------------------------------
-Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.661 s -- in com.socialapp.feed.service.FeedFanoutServiceTest
+Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.646 s -- in com.socialapp.feed.service.FeedFanoutServiceTest

@@ -1,5 +1,10 @@
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\client\ReelClient.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\client\ReelClientFallbackFactory.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\client\UserServiceClient.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\client\UserServiceClientFallbackFactory.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\controller\PostController.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\dto\CreatePostRequest.java
+C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\dto\ShareRequest.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\dto\UpdatePostRequest.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\entity\Post.java
 C:\Users\ADMIN\Desktop\projects_social_media_app\services\post-service\src\main\java\com\socialapp\post\event\PostEventListener.java

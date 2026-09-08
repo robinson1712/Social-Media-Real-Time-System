@@ -147,15 +147,108 @@ class ReelServiceTest {
     }
 
     @Test
-    void getFeed_delegatesToRepository() {
-        Pageable pageable = PageRequest.of(0, 10);
+    void incrementShareCount_incrementsShareCountAndSaves() {
         Reel reel = existingReel("reel-1", "author-1");
-        Page<Reel> page = new PageImpl<>(List.of(reel));
-        when(reelRepository.findAllByOrderByCreatedAtDesc(pageable)).thenReturn(page);
+        reel.setShareCount(2);
+        when(reelRepository.findById("reel-1")).thenReturn(Optional.of(reel));
+        when(reelRepository.save(any(Reel.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Page<Reel> result = reelService.getFeed(pageable);
+        Reel result = reelService.incrementShareCount("reel-1");
 
-        assertThat(result.getContent()).containsExactly(reel);
+        assertThat(result.getShareCount()).isEqualTo(3);
+        verify(reelRepository).save(reel);
+    }
+
+    @Test
+    void incrementShareCount_missing_throwsResourceNotFound() {
+        when(reelRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reelService.incrementShareCount("missing"))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(reelRepository, never()).save(any());
+    }
+
+    // ---------- getFeed ranking (mirrors feed-service's FeedQueryService formula) ----------
+
+    private Reel reelWithEngagement(String id, java.time.Instant createdAt, int reactionCount, int commentCount, long viewCount) {
+        return Reel.builder()
+                .id(id)
+                .authorId("author-1")
+                .videoUrl("http://media/video.mp4")
+                .createdAt(createdAt)
+                .reactionCount(reactionCount)
+                .commentCount(commentCount)
+                .viewCount(viewCount)
+                .build();
+    }
+
+    private void mockPool(List<Reel> pool) {
+        when(reelRepository.findAllByOrderByCreatedAtDesc(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(pool));
+    }
+
+    @Test
+    void getFeed_sameAge_higherEngagementRanksFirst() {
+        java.time.Instant now = java.time.Instant.now();
+        Reel low = reelWithEngagement("low", now.minus(5, java.time.temporal.ChronoUnit.HOURS), 0, 0, 0);
+        Reel high = reelWithEngagement("high", now.minus(5, java.time.temporal.ChronoUnit.HOURS), 10, 5, 100);
+        mockPool(List.of(low, high));
+
+        Page<Reel> result = reelService.getFeed(PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).extracting(Reel::getId).containsExactly("high", "low");
+    }
+
+    @Test
+    void getFeed_zeroEngagementForAll_fallsBackToPureRecencyNewestFirst() {
+        java.time.Instant now = java.time.Instant.now();
+        Reel older = reelWithEngagement("older", now.minus(10, java.time.temporal.ChronoUnit.HOURS), 0, 0, 0);
+        Reel newer = reelWithEngagement("newer", now.minus(1, java.time.temporal.ChronoUnit.HOURS), 0, 0, 0);
+        mockPool(List.of(older, newer));
+
+        Page<Reel> result = reelService.getFeed(PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).extracting(Reel::getId).containsExactly("newer", "older");
+    }
+
+    @Test
+    void getFeed_heavyEngagementCanOutrankAnOlderPostOverANewerOne() {
+        java.time.Instant now = java.time.Instant.now();
+        Reel viralButOld = reelWithEngagement("viral", now.minus(6, java.time.temporal.ChronoUnit.HOURS), 500, 200, 10000);
+        Reel freshNoEngagement = reelWithEngagement("fresh", now.minus(5, java.time.temporal.ChronoUnit.MINUTES), 0, 0, 0);
+        mockPool(List.of(freshNoEngagement, viralButOld));
+
+        Page<Reel> result = reelService.getFeed(PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).extracting(Reel::getId).containsExactly("viral", "fresh");
+    }
+
+    @Test
+    void getFeed_pagination_slicesRankedOrderNotPoolOrder() {
+        java.time.Instant now = java.time.Instant.now();
+        Reel p1 = reelWithEngagement("p1", now.minus(1, java.time.temporal.ChronoUnit.HOURS), 0, 0, 0);
+        Reel p2 = reelWithEngagement("p2", now.minus(2, java.time.temporal.ChronoUnit.HOURS), 0, 0, 0);
+        Reel p3 = reelWithEngagement("p3", now.minus(3, java.time.temporal.ChronoUnit.HOURS), 0, 0, 0);
+        // Deliberately scrambled pool order relative to recency, to prove
+        // pagination slices the RANKED list, not repository order.
+        mockPool(List.of(p3, p1, p2));
+
+        Page<Reel> firstPage = reelService.getFeed(PageRequest.of(0, 2));
+        Page<Reel> secondPage = reelService.getFeed(PageRequest.of(1, 2));
+
+        assertThat(firstPage.getContent()).extracting(Reel::getId).containsExactly("p1", "p2");
+        assertThat(secondPage.getContent()).extracting(Reel::getId).containsExactly("p3");
+        assertThat(firstPage.getTotalElements()).isEqualTo(3);
+    }
+
+    @Test
+    void getFeed_pageBeyondAvailableResults_returnsEmptyContent() {
+        mockPool(List.of(reelWithEngagement("p1", java.time.Instant.now(), 0, 0, 0)));
+
+        Page<Reel> result = reelService.getFeed(PageRequest.of(5, 10));
+
+        assertThat(result.getContent()).isEmpty();
     }
 
     @Test

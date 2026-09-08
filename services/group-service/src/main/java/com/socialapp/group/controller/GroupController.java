@@ -2,6 +2,7 @@ package com.socialapp.group.controller;
 
 import com.socialapp.common.dto.ApiResponse;
 import com.socialapp.common.dto.PageResponse;
+import com.socialapp.group.dto.ChangeRoleRequest;
 import com.socialapp.group.dto.CreateGroupRequest;
 import com.socialapp.group.entity.Group;
 import com.socialapp.group.entity.GroupMember;
@@ -67,6 +68,12 @@ public class GroupController {
     public ResponseEntity<ApiResponse<Void>> removeMember(@PathVariable String id, @PathVariable String userId) {
         groupService.removeMember(id, userId);
         return ResponseEntity.ok(ApiResponse.success("Member removed", null));
+    }
+
+    @PutMapping("/{id}/members/{userId}/role")
+    public ResponseEntity<ApiResponse<GroupMember>> changeRole(
+            @PathVariable String id, @PathVariable String userId, @Valid @RequestBody ChangeRoleRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("Role updated", groupService.changeRole(id, userId, request.role())));
     }
 
     @GetMapping("/{id}/members")

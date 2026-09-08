@@ -43,6 +43,11 @@ public class ReelController {
         return ResponseEntity.ok(ApiResponse.success(reelService.viewReel(id)));
     }
 
+    @PostMapping("/{id}/share-count")
+    public ResponseEntity<ApiResponse<Reel>> incrementShareCount(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(reelService.incrementShareCount(id)));
+    }
+
     @GetMapping("/feed")
     public ResponseEntity<ApiResponse<PageResponse<Reel>>> getFeed(
             @PageableDefault(size = 20) Pageable pageable) {

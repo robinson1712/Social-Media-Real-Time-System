@@ -8,6 +8,8 @@ import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
 import com.socialapp.common.exception.UnauthorizedException;
 import com.socialapp.user.dto.FriendshipResponse;
+import com.socialapp.user.dto.FriendshipStatusResponse;
+import com.socialapp.user.dto.RelationshipStatus;
 import com.socialapp.user.dto.UserProfileResponse;
 import com.socialapp.user.entity.Block;
 import com.socialapp.user.entity.Friendship;
@@ -37,6 +39,7 @@ public class FriendshipService {
     private final BlockRepository blockRepository;
     private final UserProfileRepository userProfileRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final FollowService followService;
 
     @Transactional
     public FriendshipResponse sendFriendRequest(String currentUserId, String targetId) {
@@ -73,21 +76,49 @@ public class FriendshipService {
         friendship.setRespondedAt(Instant.now());
         friendship = friendshipRepository.save(friendship);
         publish(friendship);
+        followService.autoFollowBothDirections(friendship.getRequesterId(), friendship.getAddresseeId());
         return FriendshipResponse.from(friendship);
     }
 
+    /**
+     * Declines an incoming request (called by the addressee) or cancels one
+     * you sent (called by the requester) — same outcome either way: the
+     * pending row goes away. The row is deleted rather than marked DECLINED
+     * so a declined/cancelled request doesn't permanently block either side
+     * from sending a fresh one later (findAnyBetween would otherwise treat
+     * a dead DECLINED row the same as an active PENDING/ACCEPTED one).
+     */
     @Transactional
     public FriendshipResponse decline(String currentUserId, String friendshipId) {
         requireAuth(currentUserId);
         Friendship friendship = findFriendshipOrThrow(friendshipId);
-        if (!friendship.getAddresseeId().equals(currentUserId)) {
-            throw new ForbiddenException("Only the addressee may decline this friend request");
+        boolean isParty = friendship.getAddresseeId().equals(currentUserId)
+                || friendship.getRequesterId().equals(currentUserId);
+        if (!isParty) {
+            throw new ForbiddenException("Only a party to this friend request may decline or cancel it");
         }
         friendship.setStatus(FriendshipStatus.DECLINED);
         friendship.setRespondedAt(Instant.now());
-        friendship = friendshipRepository.save(friendship);
         publish(friendship);
-        return FriendshipResponse.from(friendship);
+        FriendshipResponse response = FriendshipResponse.from(friendship);
+        friendshipRepository.delete(friendship);
+        return response;
+    }
+
+    /** The caller's relationship to targetId — see {@link RelationshipStatus} for what each value means. */
+    public FriendshipStatusResponse relationshipStatus(String currentUserId, String targetId) {
+        requireAuth(currentUserId);
+        return friendshipRepository.findAnyBetween(currentUserId, targetId)
+                .map(f -> {
+                    if (f.getStatus() == FriendshipStatus.ACCEPTED) {
+                        return new FriendshipStatusResponse(RelationshipStatus.FRIENDS, f.getId());
+                    }
+                    RelationshipStatus status = f.getRequesterId().equals(currentUserId)
+                            ? RelationshipStatus.PENDING_SENT
+                            : RelationshipStatus.PENDING_RECEIVED;
+                    return new FriendshipStatusResponse(status, f.getId());
+                })
+                .orElse(new FriendshipStatusResponse(RelationshipStatus.NONE, null));
     }
 
     @Transactional

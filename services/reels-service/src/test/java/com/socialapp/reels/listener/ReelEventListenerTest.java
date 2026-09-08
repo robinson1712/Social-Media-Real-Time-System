@@ -55,7 +55,8 @@ class ReelEventListenerTest {
     void onCommentCreated_topLevelCommentOnExistingReel_incrementsCommentCount() {
         Reel reel = existingReel("reel-1");
         when(reelRepository.findById("reel-1")).thenReturn(Optional.of(reel));
-        CommentCreatedEvent event = new CommentCreatedEvent("comment-1", "reel-1", "commenter-1", "author-1", null, Instant.now());
+        CommentCreatedEvent event =
+                new CommentCreatedEvent("comment-1", "REEL", "reel-1", "commenter-1", "author-1", null, Instant.now());
 
         listener.onCommentCreated(event);
 
@@ -65,7 +66,8 @@ class ReelEventListenerTest {
 
     @Test
     void onCommentCreated_replyComment_isIgnored() {
-        CommentCreatedEvent event = new CommentCreatedEvent("comment-2", "reel-1", "commenter-1", "author-1", "parent-comment-1", Instant.now());
+        CommentCreatedEvent event = new CommentCreatedEvent(
+                "comment-2", "REEL", "reel-1", "commenter-1", "author-1", "parent-comment-1", Instant.now());
 
         listener.onCommentCreated(event);
 
@@ -76,10 +78,22 @@ class ReelEventListenerTest {
     @Test
     void onCommentCreated_reelDoesNotExist_isNoOp() {
         when(reelRepository.findById("missing-reel")).thenReturn(Optional.empty());
-        CommentCreatedEvent event = new CommentCreatedEvent("comment-1", "missing-reel", "commenter-1", "author-1", null, Instant.now());
+        CommentCreatedEvent event = new CommentCreatedEvent(
+                "comment-1", "REEL", "missing-reel", "commenter-1", "author-1", null, Instant.now());
 
         listener.onCommentCreated(event);
 
+        verify(reelRepository, never()).save(any());
+    }
+
+    @Test
+    void onCommentCreated_forNonReelTarget_isIgnored() {
+        CommentCreatedEvent event = new CommentCreatedEvent(
+                "comment-1", "POST", "post-1", "commenter-1", "author-1", null, Instant.now());
+
+        listener.onCommentCreated(event);
+
+        verify(reelRepository, never()).findById(any());
         verify(reelRepository, never()).save(any());
     }
 

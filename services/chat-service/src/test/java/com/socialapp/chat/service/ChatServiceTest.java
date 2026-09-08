@@ -224,6 +224,16 @@ class ChatServiceTest {
     }
 
     @Test
+    void onlineStatuses_mixedPresence_returnsPerUserMap() {
+        when(redisTemplate.hasKey("presence:alice")).thenReturn(true);
+        when(redisTemplate.hasKey("presence:bob")).thenReturn(false);
+
+        var result = chatService.onlineStatuses(List.of("alice", "bob"));
+
+        assertThat(result).containsEntry("alice", true).containsEntry("bob", false);
+    }
+
+    @Test
     void ensurePrivateConversation_noExistingConversation_createsOne() {
         when(conversationRepository.findPrivateConversation("alice", "bob")).thenReturn(Optional.empty());
 
@@ -250,6 +260,42 @@ class ChatServiceTest {
         when(conversationRepository.findById("missing")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> chatService.getConversationOrThrow("missing"))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // ---------- deleteMessage ----------
+
+    @Test
+    void deleteMessage_bySender_scrubsContentAndMarksDeleted() {
+        Message message = Message.builder().id("m1").conversationId("conv-1").senderId("alice")
+                .content("secret").mediaUrl("http://media/1.png").sentAt(Instant.now()).build();
+        when(messageRepository.findById("m1")).thenReturn(Optional.of(message));
+        when(messageRepository.save(any(Message.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Message result = chatService.deleteMessage("m1", "alice");
+
+        assertThat(result.isDeleted()).isTrue();
+        assertThat(result.getContent()).isNull();
+        assertThat(result.getMediaUrl()).isNull();
+    }
+
+    @Test
+    void deleteMessage_byNonSender_throwsForbiddenAndNeverSaves() {
+        Message message = Message.builder().id("m1").conversationId("conv-1").senderId("alice")
+                .content("secret").sentAt(Instant.now()).build();
+        when(messageRepository.findById("m1")).thenReturn(Optional.of(message));
+
+        assertThatThrownBy(() -> chatService.deleteMessage("m1", "bob"))
+                .isInstanceOf(ForbiddenException.class);
+
+        verify(messageRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteMessage_missing_throwsResourceNotFound() {
+        when(messageRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> chatService.deleteMessage("missing", "alice"))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 }

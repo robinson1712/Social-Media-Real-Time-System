@@ -3,6 +3,7 @@ package com.socialapp.dating.service;
 import com.socialapp.common.event.KafkaTopics;
 import com.socialapp.common.event.MatchEvent;
 import com.socialapp.common.exception.ConflictException;
+import com.socialapp.common.exception.ForbiddenException;
 import com.socialapp.common.exception.ResourceNotFoundException;
 import com.socialapp.common.security.CurrentUserContext;
 import com.socialapp.dating.dto.CandidateResponse;
@@ -201,5 +202,15 @@ public class DatingService {
     public Page<Match> getMatches(Pageable pageable) {
         String userId = CurrentUserContext.getUserId();
         return matchRepository.findByUser1IdOrUser2Id(userId, userId, pageable);
+    }
+
+    public void unmatch(String matchId) {
+        String userId = CurrentUserContext.getUserId();
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Match not found: " + matchId));
+        if (!match.getUser1Id().equals(userId) && !match.getUser2Id().equals(userId)) {
+            throw new ForbiddenException("You are not part of this match");
+        }
+        matchRepository.delete(match);
     }
 }
