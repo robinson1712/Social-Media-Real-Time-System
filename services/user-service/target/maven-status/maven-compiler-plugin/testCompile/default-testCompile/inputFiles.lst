@@ -1,5 +1,5 @@
-C:\Users\ADMIN\Desktop\projects_social_media_app\services\user-service\src\test\java\com\socialapp\user\kafka\UserRegisteredListenerTest.java
-C:\Users\ADMIN\Desktop\projects_social_media_app\services\user-service\src\test\java\com\socialapp\user\service\FollowServiceTest.java
-C:\Users\ADMIN\Desktop\projects_social_media_app\services\user-service\src\test\java\com\socialapp\user\service\FriendshipServiceTest.java
-C:\Users\ADMIN\Desktop\projects_social_media_app\services\user-service\src\test\java\com\socialapp\user\service\FriendSuggestionServiceTest.java
-C:\Users\ADMIN\Desktop\projects_social_media_app\services\user-service\src\test\java\com\socialapp\user\service\UserProfileServiceTest.java
+/app/services/user-service/src/test/java/com/socialapp/user/kafka/UserRegisteredListenerTest.java
+/app/services/user-service/src/test/java/com/socialapp/user/service/FollowServiceTest.java
+/app/services/user-service/src/test/java/com/socialapp/user/service/FriendSuggestionServiceTest.java
+/app/services/user-service/src/test/java/com/socialapp/user/service/FriendshipServiceTest.java
+/app/services/user-service/src/test/java/com/socialapp/user/service/UserProfileServiceTest.java

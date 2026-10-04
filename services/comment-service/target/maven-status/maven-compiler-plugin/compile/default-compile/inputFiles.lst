@@ -1,8 +1,8 @@
-C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\CommentServiceApplication.java
-C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\controller\CommentController.java
-C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\dto\CreateCommentRequest.java
-C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\dto\UpdateCommentRequest.java
-C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\entity\Comment.java
-C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\event\CommentModerationListener.java
-C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\repository\CommentRepository.java
-C:\Users\ADMIN\Desktop\projects_social_media_app\services\comment-service\src\main\java\com\socialapp\comment\service\CommentService.java
+/app/services/comment-service/src/main/java/com/socialapp/comment/CommentServiceApplication.java
+/app/services/comment-service/src/main/java/com/socialapp/comment/controller/CommentController.java
+/app/services/comment-service/src/main/java/com/socialapp/comment/dto/CreateCommentRequest.java
+/app/services/comment-service/src/main/java/com/socialapp/comment/dto/UpdateCommentRequest.java
+/app/services/comment-service/src/main/java/com/socialapp/comment/entity/Comment.java
+/app/services/comment-service/src/main/java/com/socialapp/comment/event/CommentModerationListener.java
+/app/services/comment-service/src/main/java/com/socialapp/comment/repository/CommentRepository.java
+/app/services/comment-service/src/main/java/com/socialapp/comment/service/CommentService.java

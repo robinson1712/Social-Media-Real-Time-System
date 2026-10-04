@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.socialapp.story.service.StoryServiceTest
--------------------------------------------------------------------------------
-Tests run: 17, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.114 s -- in com.socialapp.story.service.StoryServiceTest

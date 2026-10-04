@@ -1,2 +1,2 @@
-com\socialapp\notification\event\NotificationEventListenerTest.class
-com\socialapp\notification\service\NotificationServiceTest.class
+com/socialapp/notification/service/NotificationServiceTest.class
+com/socialapp/notification/event/NotificationEventListenerTest.class

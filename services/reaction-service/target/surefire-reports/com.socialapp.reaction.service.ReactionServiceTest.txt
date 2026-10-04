@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.socialapp.reaction.service.ReactionServiceTest
--------------------------------------------------------------------------------
-Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.063 s -- in com.socialapp.reaction.service.ReactionServiceTest

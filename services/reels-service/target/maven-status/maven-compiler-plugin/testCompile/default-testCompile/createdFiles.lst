@@ -1,2 +1,2 @@
-com\socialapp\reels\service\ReelServiceTest.class
-com\socialapp\reels\listener\ReelEventListenerTest.class
+com/socialapp/reels/listener/ReelEventListenerTest.class
+com/socialapp/reels/service/ReelServiceTest.class

@@ -1,2 +1,2 @@
-com\socialapp\story\listener\StoryEventListenerTest.class
-com\socialapp\story\service\StoryServiceTest.class
+com/socialapp/story/listener/StoryEventListenerTest.class
+com/socialapp/story/service/StoryServiceTest.class

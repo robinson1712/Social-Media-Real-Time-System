@@ -1,3 +1,3 @@
-C:\Users\ADMIN\Desktop\projects_social_media_app\infra\api-gateway\src\main\java\com\socialapp\gateway\ApiGatewayApplication.java
-C:\Users\ADMIN\Desktop\projects_social_media_app\infra\api-gateway\src\main\java\com\socialapp\gateway\config\GatewayConfig.java
-C:\Users\ADMIN\Desktop\projects_social_media_app\infra\api-gateway\src\main\java\com\socialapp\gateway\filter\JwtAuthenticationFilter.java
+/app/infra/api-gateway/src/main/java/com/socialapp/gateway/ApiGatewayApplication.java
+/app/infra/api-gateway/src/main/java/com/socialapp/gateway/config/GatewayConfig.java
+/app/infra/api-gateway/src/main/java/com/socialapp/gateway/filter/JwtAuthenticationFilter.java
