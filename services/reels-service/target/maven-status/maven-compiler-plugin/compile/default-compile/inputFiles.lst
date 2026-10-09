@@ -1,7 +1,0 @@
-/app/services/reels-service/src/main/java/com/socialapp/reels/ReelsServiceApplication.java
-/app/services/reels-service/src/main/java/com/socialapp/reels/controller/ReelController.java
-/app/services/reels-service/src/main/java/com/socialapp/reels/document/Reel.java
-/app/services/reels-service/src/main/java/com/socialapp/reels/dto/CreateReelRequest.java
-/app/services/reels-service/src/main/java/com/socialapp/reels/listener/ReelEventListener.java
-/app/services/reels-service/src/main/java/com/socialapp/reels/repository/ReelRepository.java
-/app/services/reels-service/src/main/java/com/socialapp/reels/service/ReelService.java

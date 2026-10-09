@@ -1,5 +1,0 @@
-com/socialapp/user/service/FriendshipServiceTest.class
-com/socialapp/user/service/FriendSuggestionServiceTest.class
-com/socialapp/user/service/UserProfileServiceTest.class
-com/socialapp/user/service/FollowServiceTest.class
-com/socialapp/user/kafka/UserRegisteredListenerTest.class

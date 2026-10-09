@@ -1,3 +1,0 @@
-/app/infra/api-gateway/src/main/java/com/socialapp/gateway/ApiGatewayApplication.java
-/app/infra/api-gateway/src/main/java/com/socialapp/gateway/config/GatewayConfig.java
-/app/infra/api-gateway/src/main/java/com/socialapp/gateway/filter/JwtAuthenticationFilter.java

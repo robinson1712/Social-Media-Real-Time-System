@@ -1,5 +1,0 @@
-/app/services/user-service/src/test/java/com/socialapp/user/kafka/UserRegisteredListenerTest.java
-/app/services/user-service/src/test/java/com/socialapp/user/service/FollowServiceTest.java
-/app/services/user-service/src/test/java/com/socialapp/user/service/FriendSuggestionServiceTest.java
-/app/services/user-service/src/test/java/com/socialapp/user/service/FriendshipServiceTest.java
-/app/services/user-service/src/test/java/com/socialapp/user/service/UserProfileServiceTest.java

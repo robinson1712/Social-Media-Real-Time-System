@@ -1,9 +1,0 @@
-com/socialapp/comment/controller/CommentController.class
-com/socialapp/comment/dto/UpdateCommentRequest.class
-com/socialapp/comment/CommentServiceApplication.class
-com/socialapp/comment/entity/Comment$CommentBuilder.class
-com/socialapp/comment/repository/CommentRepository.class
-com/socialapp/comment/dto/CreateCommentRequest.class
-com/socialapp/comment/service/CommentService.class
-com/socialapp/comment/event/CommentModerationListener.class
-com/socialapp/comment/entity/Comment.class

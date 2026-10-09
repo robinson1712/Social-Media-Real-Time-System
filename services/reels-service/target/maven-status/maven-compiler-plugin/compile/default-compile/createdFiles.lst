@@ -1,8 +1,0 @@
-com/socialapp/reels/service/ReelService.class
-com/socialapp/reels/document/Reel.class
-com/socialapp/reels/dto/CreateReelRequest.class
-com/socialapp/reels/listener/ReelEventListener.class
-com/socialapp/reels/controller/ReelController.class
-com/socialapp/reels/repository/ReelRepository.class
-com/socialapp/reels/ReelsServiceApplication.class
-com/socialapp/reels/document/Reel$ReelBuilder.class
